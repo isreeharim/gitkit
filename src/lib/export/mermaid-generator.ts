@@ -126,10 +126,13 @@ export function generateRepoStructureMermaid(
  *   n_src_App -.->|depends on| n_react
  * ```
  */
+import { ensureDependencyGraph } from '@/lib/analyzer/graph-builder';
+
 export function generateDependencyMermaid(
-  graph: DependencyGraph,
+  graphInput: DependencyGraph,
   options: MermaidDependencyOptions = {}
 ): string {
+  const graph = ensureDependencyGraph(graphInput);
   const includeExternal = options.includeExternal ?? true;
   const highlightCycles = options.highlightCycles ?? true;
 

@@ -19,7 +19,8 @@ import {
   Layers,
   HelpCircle,
 } from 'lucide-react';
-import type { DependencyGraph } from '@/types/dependency';
+import type { DependencyGraph, SerializedDependencyGraph } from '@/types/dependency';
+import { ensureDependencyGraph } from '@/lib/analyzer/graph-builder';
 import { filterDependencyGraph, type DependencyFilterMode } from '@/lib/analyzer/graph-filter';
 import { computeDependencyLayout } from '@/lib/analyzer/graph-layout';
 import { serializeDependenciesToReactFlow } from '@/lib/analyzer/react-flow-adapter';
@@ -36,22 +37,32 @@ const nodeTypes = {
   depPackageNode: DependencyPackageNodeComponent,
 };
 
-interface DependencyGraphCanvasProps {
-  graph: DependencyGraph;
-  owner: string;
-  repo: string;
-  defaultBranch: string;
+export interface DependencyGraphCanvasProps {
+  graph?: DependencyGraph;
+  serializedGraph?: SerializedDependencyGraph;
+  owner?: string;
+  repo?: string;
+  defaultBranch?: string;
   metadata?: RepositoryMetadata;
 }
 
 function InnerDependencyCanvas({
-  graph,
-  owner,
-  repo,
-  defaultBranch,
+  graph: initialGraph,
+  serializedGraph,
+  owner: propOwner,
+  repo: propRepo,
+  defaultBranch: propDefaultBranch,
   metadata,
 }: DependencyGraphCanvasProps) {
   const { fitView } = useReactFlow();
+
+  const graph = useMemo(() => {
+    return ensureDependencyGraph(serializedGraph || initialGraph);
+  }, [serializedGraph, initialGraph]);
+
+  const owner = propOwner || metadata?.owner || '';
+  const repo = propRepo || metadata?.name || '';
+  const defaultBranch = propDefaultBranch || metadata?.defaultBranch || 'main';
 
   const repoMeta: RepositoryMetadata = useMemo(() => {
     return (
@@ -267,6 +278,41 @@ function InnerDependencyCanvas({
           )}
         </div>
       </header>
+
+      {/* Empty States */}
+      {graph.nodes.size === 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center">
+          <div className="pointer-events-auto flex max-w-md flex-col items-center rounded-xl border border-neutral-800 bg-neutral-950/90 p-8 shadow-2xl backdrop-blur-md">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-900 text-neutral-400">
+              <Package className="h-6 w-6 text-neutral-400" />
+            </div>
+            <h3 className="font-mono text-sm font-semibold text-neutral-200">
+              No Dependencies Detected
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed text-neutral-400">
+              GitKit deterministically scans manifests (
+              <code className="text-cyan-400">package.json</code>,{' '}
+              <code className="text-cyan-400">requirements.txt</code>,{' '}
+              <code className="text-cyan-400">pyproject.toml</code>,{' '}
+              <code className="text-cyan-400">Cargo.toml</code>,{' '}
+              <code className="text-cyan-400">go.mod</code>) and static source imports. No package
+              manifests or cross-file imports were found in this repository.
+            </p>
+          </div>
+        </div>
+      ) : filtered.visibleNodes.length === 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center">
+          <div className="flex max-w-xs flex-col items-center rounded-xl border border-neutral-800 bg-neutral-950/80 p-6 shadow-xl backdrop-blur-md">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-500">
+              <Search className="h-5 w-5" />
+            </div>
+            <h4 className="font-mono text-xs font-medium text-neutral-300">No matching nodes</h4>
+            <p className="mt-1 text-[11px] text-neutral-500">
+              Try adjusting your search query or switching the active filter.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {/* React Flow Viewport */}
       <ReactFlow

@@ -1,4 +1,5 @@
 import type { GitKitExportInput, GitKitExportPayload } from '@/types/export';
+import { ensureDependencyGraph } from '../analyzer/graph-builder';
 
 export interface JsonExportOptions {
   readonly pretty?: boolean;
@@ -94,7 +95,7 @@ export function generateExportPayload(input: GitKitExportInput): GitKitExportPay
 
   // Attach dependencies if present
   if (input.dependencyGraph) {
-    const dg = input.dependencyGraph;
+    const dg = ensureDependencyGraph(input.dependencyGraph);
     const fileNodes = Array.from(dg.nodes.values()).filter((n) => n.type === 'file');
     const pkgNodes = Array.from(dg.nodes.values()).filter((n) => n.type === 'package');
 

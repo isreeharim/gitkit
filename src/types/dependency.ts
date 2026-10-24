@@ -119,3 +119,14 @@ export interface DependencyGraph {
   readonly packages: PackageDependency[];
   readonly stats: DependencyGraphStats;
 }
+
+/**
+ * JSON-serializable representation of DependencyGraph safe for Astro client island props.
+ */
+export interface SerializedDependencyGraph {
+  readonly nodesList: DependencyNode[];
+  readonly edges: DependencyEdge[];
+  readonly cycles: CircularDependencyCycle[];
+  readonly packages: PackageDependency[];
+  readonly stats: DependencyGraphStats;
+}

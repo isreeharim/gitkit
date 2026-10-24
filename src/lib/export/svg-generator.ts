@@ -211,13 +211,16 @@ function renderRepoNodeSvg(
     </g>`;
 }
 
+import { ensureDependencyGraph } from '@/lib/analyzer/graph-builder';
+
 /**
  * Generates standalone, valid SVG markup for the Dependency Graph.
  */
 export function generateDependencySvg(
-  graph: DependencyGraph,
+  graphInput: DependencyGraph,
   options: SvgExportOptions = {}
 ): string {
+  const graph = ensureDependencyGraph(graphInput);
   const padding = options.padding ?? 60;
   const nodes = Array.from(graph.nodes.values());
   const edges = graph.edges;

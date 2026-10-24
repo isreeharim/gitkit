@@ -1,4 +1,5 @@
 import type { DependencyGraph, DependencyNode, DependencyEdge } from '@/types/dependency';
+import { ensureDependencyGraph } from './graph-builder';
 
 export type DependencyFilterMode = 'all' | 'internal' | 'external' | 'unresolved' | 'cycles_only';
 
@@ -18,9 +19,10 @@ export interface FilteredDependencyGraph {
  * Deterministically filters dependency graph nodes and edges according to search query and filter modes.
  */
 export function filterDependencyGraph(
-  graph: DependencyGraph,
+  graphInput: DependencyGraph,
   options: DependencyFilterOptions
 ): FilteredDependencyGraph {
+  const graph = ensureDependencyGraph(graphInput);
   const query = options.searchQuery?.trim().toLowerCase() || '';
   const mode = options.filterMode || 'all';
 

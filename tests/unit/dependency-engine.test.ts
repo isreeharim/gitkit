@@ -11,7 +11,11 @@ import {
 import { parseManifest } from '../../src/lib/parser';
 import { resolveModuleSpecifier } from '../../src/lib/analyzer/resolver';
 import { detectCircularDependencies } from '../../src/lib/analyzer/cycle-detector';
-import { buildDependencyGraph } from '../../src/lib/analyzer/graph-builder';
+import {
+  buildDependencyGraph,
+  serializeDependencyGraph,
+  ensureDependencyGraph,
+} from '../../src/lib/analyzer/graph-builder';
 import { computeDependencyLayout } from '../../src/lib/analyzer/graph-layout';
 import { serializeDependenciesToReactFlow } from '../../src/lib/analyzer/react-flow-adapter';
 import { filterDependencyGraph } from '../../src/lib/analyzer/graph-filter';
@@ -694,5 +698,65 @@ describe('Graph Filter and React Flow Adapter', () => {
     expect(flowNodes.every((n) => (n.data?.node as FileDependencyNode)?.inCycle === true)).toBe(
       true
     );
+  });
+
+  it('serializes DependencyGraph with Map to JSON-friendly SerializedDependencyGraph', () => {
+    const parsedFiles = new Map([
+      [
+        'src/app.ts',
+        [
+          {
+            specifier: 'react',
+            importedSymbols: ['useState'],
+            isTypeOnly: false,
+            isDynamic: false,
+            line: 1,
+          },
+        ],
+      ],
+    ]);
+    const allRepoPaths = new Set(['src/app.ts']);
+    const graph = buildDependencyGraph({ parsedFiles, allRepoPaths });
+
+    expect(graph.nodes instanceof Map).toBe(true);
+
+    const serialized = serializeDependencyGraph(graph);
+    expect(Array.isArray(serialized.nodesList)).toBe(true);
+    expect(serialized.nodesList.length).toBe(graph.nodes.size);
+
+    // Simulate JSON transmission across Astro SSR -> React Island
+    const jsonStr = JSON.stringify(serialized);
+    const parsedFromJson = JSON.parse(jsonStr);
+
+    const reconstructed = ensureDependencyGraph(parsedFromJson);
+    expect(reconstructed.nodes instanceof Map).toBe(true);
+    expect(reconstructed.nodes.size).toBe(graph.nodes.size);
+    expect(reconstructed.nodes.get('file:src/app.ts')).toBeDefined();
+    expect(reconstructed.nodes.get('pkg:react')).toBeDefined();
+  });
+
+  it('ensureDependencyGraph gracefully reconstructs graph from corrupted, empty, or unhydrated inputs', () => {
+    const emptyGraph = ensureDependencyGraph(null);
+    expect(emptyGraph.nodes instanceof Map).toBe(true);
+    expect(emptyGraph.nodes.size).toBe(0);
+    expect(emptyGraph.edges).toEqual([]);
+
+    // Plain object with nodes as {} (what happens when Map is JSON-stringified without serializeDependencyGraph)
+    const brokenIslandObj = {
+      nodes: {},
+      edges: [{ id: 'e1', sourceFile: 'src/index.ts', target: 'src/util.ts', kind: 'internal' }],
+      cycles: [],
+      stats: { totalFiles: 2 },
+    };
+
+    const repaired = ensureDependencyGraph(brokenIslandObj);
+    expect(repaired.nodes instanceof Map).toBe(true);
+    // Should have reconstructed nodes from edges
+    expect(repaired.nodes.has('file:src/index.ts')).toBe(true);
+    expect(repaired.nodes.has('file:src/util.ts')).toBe(true);
+
+    // filterDependencyGraph should execute without throwing
+    const filtered = filterDependencyGraph(brokenIslandObj as any, { filterMode: 'all' });
+    expect(filtered.visibleNodes.length).toBe(2);
   });
 });

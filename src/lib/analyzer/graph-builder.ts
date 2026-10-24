@@ -1,5 +1,6 @@
 import type {
   DependencyGraph,
+  SerializedDependencyGraph,
   DependencyNode,
   DependencyEdge,
   FileDependencyNode,
@@ -195,5 +196,163 @@ export function buildDependencyGraph(input: GraphBuilderInput): DependencyGraph 
     cycles,
     packages: manifests,
     stats,
+  };
+}
+
+/**
+ * Converts a DependencyGraph with Map nodes into a JSON-serializable SerializedDependencyGraph.
+ */
+export function serializeDependencyGraph(graph: DependencyGraph): SerializedDependencyGraph {
+  return {
+    nodesList: Array.from(graph.nodes.values()),
+    edges: graph.edges,
+    cycles: graph.cycles,
+    packages: graph.packages,
+    stats: graph.stats,
+  };
+}
+
+/**
+ * Deterministically reconstructs a full DependencyGraph with Map nodes from any format
+ * (DependencyGraph, SerializedDependencyGraph, or JSON-hydrated object).
+ */
+export function ensureDependencyGraph(raw: unknown): DependencyGraph {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      nodes: new Map(),
+      edges: [],
+      cycles: [],
+      packages: [],
+      stats: {
+        totalFiles: 0,
+        analyzedFiles: 0,
+        internalEdges: 0,
+        externalEdges: 0,
+        unresolvedEdges: 0,
+        circularCyclesCount: 0,
+        uniquePackagesCount: 0,
+        devPackagesCount: 0,
+      },
+    };
+  }
+
+  const rawObj = raw as {
+    nodes?: Map<string, DependencyNode> | Record<string, DependencyNode> | DependencyNode[];
+    nodesList?: DependencyNode[];
+    edges?: DependencyEdge[];
+    cycles?: import('@/types/dependency').CircularDependencyCycle[];
+    packages?: PackageDependency[];
+    stats?: DependencyGraphStats;
+  };
+
+  const nodesMap = new Map<string, DependencyNode>();
+
+  if (rawObj.nodes instanceof Map) {
+    for (const [id, node] of rawObj.nodes.entries()) {
+      nodesMap.set(id, node);
+    }
+  } else if (Array.isArray(rawObj.nodesList)) {
+    for (const node of rawObj.nodesList) {
+      if (node && node.id) {
+        nodesMap.set(node.id, node);
+      }
+    }
+  } else if (Array.isArray(rawObj.nodes)) {
+    for (const node of rawObj.nodes) {
+      if (node && node.id) {
+        nodesMap.set(node.id, node);
+      }
+    }
+  } else if (rawObj.nodes && typeof rawObj.nodes === 'object') {
+    for (const [id, node] of Object.entries(rawObj.nodes)) {
+      if (node && (node as DependencyNode).id) {
+        nodesMap.set(id, node as DependencyNode);
+      }
+    }
+  }
+
+  // Failsafe: if nodesMap is still empty, reconstruct nodes from packages and edges
+  if (nodesMap.size === 0) {
+    if (Array.isArray(rawObj.packages)) {
+      for (const pkg of rawObj.packages) {
+        const pkgId = `pkg:${pkg.name}`;
+        nodesMap.set(pkgId, {
+          id: pkgId,
+          type: 'package',
+          name: pkg.name,
+          ecosystem: pkg.ecosystem || 'npm',
+          versionConstraint: pkg.versionConstraint,
+          isDev: pkg.isDev ?? false,
+          manifestSource: pkg.manifestSource,
+          isUnresolved: false,
+        });
+      }
+    }
+
+    if (Array.isArray(rawObj.edges)) {
+      for (const edge of rawObj.edges) {
+        const fileId = `file:${edge.sourceFile}`;
+        if (!nodesMap.has(fileId)) {
+          nodesMap.set(fileId, {
+            id: fileId,
+            type: 'file',
+            path: edge.sourceFile,
+            name: edge.sourceFile.split('/').pop() || edge.sourceFile,
+            language: getLanguageForFile(edge.sourceFile),
+            isAnalyzed: true,
+            inDegree: 0,
+            outDegree: 0,
+            inCycle: false,
+            cycleIds: [],
+          });
+        }
+        if (edge.kind === 'internal') {
+          const targetFileId = `file:${edge.target}`;
+          if (!nodesMap.has(targetFileId)) {
+            nodesMap.set(targetFileId, {
+              id: targetFileId,
+              type: 'file',
+              path: edge.target,
+              name: edge.target.split('/').pop() || edge.target,
+              language: getLanguageForFile(edge.target),
+              isAnalyzed: false,
+              inDegree: 0,
+              outDegree: 0,
+              inCycle: false,
+              cycleIds: [],
+            });
+          }
+        } else if (edge.kind === 'external') {
+          const targetPkgId = `pkg:${edge.target}`;
+          if (!nodesMap.has(targetPkgId)) {
+            nodesMap.set(targetPkgId, {
+              id: targetPkgId,
+              type: 'package',
+              name: edge.target,
+              ecosystem: 'npm',
+              isDev: false,
+              isUnresolved: true,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    nodes: nodesMap,
+    edges: Array.isArray(rawObj.edges) ? rawObj.edges : [],
+    cycles: Array.isArray(rawObj.cycles) ? rawObj.cycles : [],
+    packages: Array.isArray(rawObj.packages) ? rawObj.packages : [],
+    stats: rawObj.stats || {
+      totalFiles: 0,
+      analyzedFiles: 0,
+      internalEdges: 0,
+      externalEdges: 0,
+      unresolvedEdges: 0,
+      circularCyclesCount: 0,
+      uniquePackagesCount: 0,
+      devPackagesCount: 0,
+    },
   };
 }
