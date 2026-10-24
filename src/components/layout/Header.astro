@@ -1,5 +1,5 @@
 ---
-import Badge from '../ui/Badge.astro';
+
 ---
 
 <header
@@ -19,29 +19,17 @@ import Badge from '../ui/Badge.astro';
           GitKit
         </span>
       </a>
-      <span class="text-neutral-600">/</span>
-      <Badge
-        variant="outline"
-        class="border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-400"
-      >
-        v1.0 • Deterministic
-      </Badge>
     </div>
 
     <nav aria-label="Global" class="flex items-center gap-4 font-mono text-xs">
       <a
-        href="https://github.com"
+        href="https://github.com/isreeharim/gitkit"
         target="_blank"
         rel="noreferrer"
         class="rounded text-neutral-400 transition-colors hover:text-white"
       >
-        docs
+        GitHub
       </a>
-      <div class="h-3 w-px bg-neutral-800"></div>
-      <div class="flex items-center gap-1.5 text-neutral-400">
-        <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-        <span class="text-[11px]">Deterministic Engine</span>
-      </div>
     </nav>
   </div>
 </header>

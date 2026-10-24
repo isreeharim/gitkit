@@ -1,129 +1,29 @@
 ---
 import RootLayout from '../layouts/RootLayout.astro';
-import Badge from '../components/ui/Badge.astro';
-import Card from '../components/ui/Card.astro';
 import { RepoInput } from '../components/repository/RepoInput';
 ---
 
 <RootLayout>
   <!-- Hero Section -->
-  <section class="relative border-b border-neutral-900 pt-20 pb-16 md:pt-28 md:pb-24">
-    <div class="mx-auto max-w-5xl px-4 text-center sm:px-6">
-      <!-- Tag / Badges -->
-      <div class="mb-6 inline-flex flex-wrap items-center justify-center gap-2">
-        <Badge variant="success">Zero AI / Deterministic</Badge>
-        <Badge variant="outline">₹0 Operating Budget</Badge>
-        <Badge variant="outline">Free & Open Source</Badge>
-      </div>
-
+  <section
+    class="relative flex min-h-[calc(100vh-120px)] flex-col justify-center px-4 py-16 sm:px-6"
+  >
+    <div class="mx-auto max-w-3xl text-center">
       <!-- Main Headline -->
-      <h1
-        class="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
-      >
+      <h1 class="text-3xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
         Understand. Analyze. Visualize. <br />
         <span class="font-normal text-neutral-400">Your repositories.</span>
       </h1>
 
       <!-- Subtitle -->
       <p class="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-neutral-400 sm:text-base">
-        A deterministic developer toolkit for inspecting GitHub repositories via AST parsing,
-        concrete dependency graphs, and static metrics. No generative AI, no hallucinations.
+        Deep repository intelligence via static analysis, concrete dependency graphs, Git history
+        hotspots, and verifiable health assessments.
       </p>
 
       <!-- Repository Input Island -->
       <div class="mt-10">
         <RepoInput client:load />
-      </div>
-    </div>
-  </section>
-
-  <!-- Technical Foundation Overview -->
-  <section class="py-16 md:py-20">
-    <div class="mx-auto max-w-5xl px-4 sm:px-6">
-      <div class="mb-8 flex items-center justify-between border-b border-neutral-900 pb-6">
-        <div>
-          <h2 class="text-base font-semibold tracking-tight text-white">Core Principles</h2>
-          <p class="mt-0.5 font-mono text-xs text-neutral-400">
-            Non-negotiable architectural tenets
-          </p>
-        </div>
-        <span
-          class="rounded border border-emerald-800/40 bg-emerald-950/40 px-2 py-0.5 font-mono text-xs text-emerald-400"
-        >
-          Engine v1.0 Live
-        </span>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
-          <div class="mb-2 font-mono text-xs text-emerald-400">01 / DETERMINISTIC</div>
-          <h3 class="mb-1.5 text-sm font-semibold text-white">No LLMs or AI Models</h3>
-          <p class="text-xs leading-relaxed text-neutral-400">
-            Every analysis, metric, and graph is mathematically verifiable and reproducible through
-            AST parsers, Tree-sitter, and formal graph algorithms.
-          </p>
-        </Card>
-
-        <Card>
-          <div class="mb-2 font-mono text-xs text-neutral-400">02 / EDGE RUNTIME</div>
-          <h3 class="mb-1.5 text-sm font-semibold text-white">Cloudflare Native</h3>
-          <p class="text-xs leading-relaxed text-neutral-400">
-            Zero server maintenance costs. Built for edge-speed execution with permanent ₹0
-            operating costs, avoiding vendor lock-in.
-          </p>
-        </Card>
-
-        <Card>
-          <div class="mb-2 font-mono text-xs text-neutral-400">03 / SECURITY FIRST</div>
-          <h3 class="mb-1.5 text-sm font-semibold text-white">Public & Secret-Safe</h3>
-          <p class="text-xs leading-relaxed text-neutral-400">
-            Public repositories require zero login. Credentials and tokens are strictly kept out of
-            client bundles, and user code is never retained.
-          </p>
-        </Card>
-      </div>
-
-      <!-- Workspace Architecture Blueprint -->
-      <div
-        class="mt-8 rounded-lg border border-neutral-800/80 bg-neutral-950 p-5 font-mono text-xs"
-      >
-        <div
-          class="mb-3 flex items-center justify-between border-b border-neutral-900 pb-3 text-neutral-400"
-        >
-          <span class="flex items-center gap-2">
-            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-            <span>Target Architecture: gitkit.in/[owner]/[repo]</span>
-          </span>
-          <span class="text-neutral-500">Engine Spec 1.0</span>
-        </div>
-        <div class="space-y-1.5 text-neutral-400">
-          <p>
-            <span class="text-neutral-500">$</span> parse & validate repository coordinates <span
-              class="text-emerald-400">✓ [Phase 0 verified]</span
-            >
-          </p>
-          <p>
-            <span class="text-neutral-500">$</span> fetch tree & commit graphs via Octokit / isomorphic-git
-            <span class="text-emerald-400">✓ [verified]</span>
-          </p>
-          <p>
-            <span class="text-neutral-500">$</span> parse concrete AST import/export dependencies
-            <span class="text-emerald-400">✓ [verified]</span>
-          </p>
-          <p>
-            <span class="text-neutral-500">$</span> Git evolution, commit velocity & code hotspot identification
-            <span class="text-emerald-400">✓ [verified]</span>
-          </p>
-          <p>
-            <span class="text-neutral-500">$</span> transparent 7-category health assessment & deterministic
-            security audit
-            <span class="text-emerald-400">✓ [verified]</span>
-          </p>
-          <p>
-            <span class="text-neutral-500">$</span> zero-server client exports (SVG, PNG, Mermaid, JSON)
-            <span class="text-emerald-400">✓ [verified]</span>
-          </p>
-        </div>
       </div>
     </div>
   </section>

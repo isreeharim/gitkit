@@ -84,11 +84,6 @@ export function RepoInput() {
                     <ArrowRight className="h-3 w-3" />
                   </a>
                 </div>
-                <p className="mt-2 border-l border-neutral-800 pl-6 text-neutral-400">
-                  <strong className="text-neutral-300">Phase 0 Status:</strong> Coordinates
-                  verified. Live tree ingestion, AST dependencies, git hotspots, health, and
-                  security active.
-                </p>
               </div>
             ) : (
               <div className="flex items-center gap-2 rounded-md border border-red-950/60 bg-red-950/20 p-3 font-mono text-xs text-red-400">

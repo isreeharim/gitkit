@@ -1,16 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('GitKit Homepage', () => {
-  test('renders homepage with technical branding and badges', async ({ page }) => {
+  test('renders homepage with technical branding and clean headline', async ({ page }) => {
     await page.goto('/');
 
     // Check title & branding
     await expect(page).toHaveTitle(/GitKit/);
     await expect(page.locator('h1')).toContainText('Understand. Analyze. Visualize.');
-
-    // Check positioning badges
-    await expect(page.getByText('Zero AI / Deterministic')).toBeVisible();
-    await expect(page.getByText('₹0 Operating Budget')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'GitHub Repository URL' })).toBeVisible();
   });
 
   test('validates repo input without mock results', async ({ page }) => {
@@ -32,6 +29,6 @@ test.describe('GitKit Homepage', () => {
     await submitBtn.click();
     await expect(page.getByText(/Valid repository target:/i)).toBeVisible();
     await expect(page.getByText('astral-sh/uv')).toBeVisible();
-    await expect(page.getByText(/Phase 0 Status:/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /Open Workspace/i })).toBeVisible();
   });
 });
