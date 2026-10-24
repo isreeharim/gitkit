@@ -1,0 +1,300 @@
+---
+import Card from '@/components/ui/Card.astro';
+import Badge from '@/components/ui/Badge.astro';
+import type { RepositoryMetricsReport } from '@/types/metrics';
+import {
+  FileCode,
+  FolderTree,
+  GitCommit,
+  Users,
+  Layers,
+  Scale,
+  Hash,
+  FileText,
+  Info,
+} from 'lucide-react';
+
+interface Props {
+  metrics: RepositoryMetricsReport;
+}
+
+const { metrics } = Astro.props;
+const { repository, code, structure, activity } = metrics;
+---
+
+<div class="space-y-6">
+  <!-- Section Title -->
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800 pb-3">
+    <div class="flex items-center gap-2">
+      <Layers className="h-4 w-4 text-cyan-400" />
+      <h2 class="font-mono text-sm font-semibold tracking-wider text-white uppercase">
+        Repository Statistics & Deterministic Metrics
+      </h2>
+    </div>
+    <div class="flex items-center gap-2">
+      <Badge variant="outline" class="font-mono text-[10px]">
+        {structure.totalFiles} files analyzed
+      </Badge>
+      <Badge variant="outline" class="border-cyan-500/30 font-mono text-[10px] text-cyan-400">
+        Deterministic Engine
+      </Badge>
+    </div>
+  </div>
+
+  <!-- Language Distribution Bar -->
+  {
+    structure.languages.length > 0 && (
+      <Card class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+            Language Composition
+          </span>
+          <span class="font-mono text-[11px] text-neutral-500">By file bytes in Git tree</span>
+        </div>
+
+        {/* Multi-segment horizontal bar */}
+        <div class="flex h-3 w-full overflow-hidden rounded-full border border-neutral-800 bg-neutral-900">
+          {structure.languages.slice(0, 10).map((lang) => (
+            <div
+              style={`width: ${Math.max(lang.percentageBytes, 0.5)}%; background-color: ${lang.color};`}
+              title={`${lang.name}: ${lang.percentageBytes.toFixed(1)}% (${lang.fileCount} files)`}
+              class="h-full transition-all hover:opacity-80"
+            />
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 font-mono text-xs">
+          {structure.languages.slice(0, 8).map((lang) => (
+            <div class="flex items-center gap-2">
+              <span
+                class="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm"
+                style={`background-color: ${lang.color};`}
+              />
+              <span class="font-medium text-neutral-200">{lang.name}</span>
+              <span class="text-[11px] text-neutral-500">{lang.percentageBytes.toFixed(1)}%</span>
+              <span class="text-[10px] text-neutral-600">({lang.fileCount} files)</span>
+            </div>
+          ))}
+          {structure.languages.length > 8 && (
+            <span class="text-[11px] text-neutral-500">
+              +{structure.languages.length - 8} more languages
+            </span>
+          )}
+        </div>
+      </Card>
+    )
+  }
+
+  <!-- Core Metric Cards Grid -->
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <!-- Total Files & Dirs -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+        <FileCode className="h-3.5 w-3.5 text-blue-400" />
+        <span>Files</span>
+      </div>
+      <div class="font-mono text-xl font-bold text-white">
+        {code.totalFiles.formattedValue}
+      </div>
+      <div class="font-mono text-[10px] text-neutral-500">
+        {code.totalDirectories.formattedValue} directories
+      </div>
+    </Card>
+
+    <!-- Source Files -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+        <Hash className="h-3.5 w-3.5 text-emerald-400" />
+        <span>Source Code</span>
+      </div>
+      <div class="font-mono text-xl font-bold text-emerald-400">
+        {code.sourceFiles.formattedValue}
+      </div>
+      <div class="font-mono text-[10px] text-neutral-500">
+        {structure.nonSourceFilesCount} docs & assets
+      </div>
+    </Card>
+
+    <!-- Sampled LOC -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+          <FileText className="h-3.5 w-3.5 text-cyan-400" />
+          <span>Measured LOC</span>
+        </div>
+        {
+          code.loc.isSampled && (
+            <span class="py-0.2 rounded border border-cyan-800/60 bg-cyan-950/60 px-1 font-mono text-[9px] text-cyan-300">
+              Sampled
+            </span>
+          )
+        }
+      </div>
+      <div class="font-mono text-xl font-bold text-white">
+        {code.loc.codeLines > 0 ? code.loc.codeLines.toLocaleString() : 'N/A'}
+      </div>
+      <div class="font-mono text-[10px] text-neutral-500" title={code.loc.samplingNote}>
+        {
+          code.loc.commentLines > 0
+            ? `${code.loc.commentLines.toLocaleString()} comments`
+            : 'Zero comments'
+        }
+      </div>
+    </Card>
+
+    <!-- Repository Size -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+        <Scale className="h-3.5 w-3.5 text-purple-400" />
+        <span>Disk Size</span>
+      </div>
+      <div class="font-mono text-xl font-bold text-white">
+        {repository.sizeKb.formattedValue}
+      </div>
+      <div class="font-mono text-[10px] text-neutral-500">Includes Git history</div>
+    </Card>
+
+    <!-- Commits -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+        <GitCommit className="h-3.5 w-3.5 text-amber-400" />
+        <span>Commits</span>
+      </div>
+      <div class="font-mono text-xl font-bold text-white">
+        {activity.commitCount !== null ? activity.commitCount.toLocaleString() : 'Unavailable'}
+      </div>
+      <div
+        class="truncate font-mono text-[10px] text-neutral-500"
+        title={`Default: ${repository.defaultBranch.value}`}
+      >
+        {repository.defaultBranch.value} branch
+      </div>
+    </Card>
+
+    <!-- Contributors -->
+    <Card class="space-y-1 p-3">
+      <div class="flex items-center gap-1.5 font-mono text-[11px] text-neutral-400">
+        <Users className="h-3.5 w-3.5 text-rose-400" />
+        <span>Contributors</span>
+      </div>
+      <div class="font-mono text-xl font-bold text-white">
+        {
+          activity.contributorCount !== null
+            ? activity.contributorCount.toLocaleString()
+            : 'Unavailable'
+        }
+      </div>
+      <div class="font-mono text-[10px] text-neutral-500">
+        {repository.forks.formattedValue} forks
+      </div>
+    </Card>
+  </div>
+
+  <!-- Structural Breakdowns (3 columns) -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Column 1: Largest Files -->
+    <Card class="space-y-3">
+      <div class="flex items-center justify-between border-b border-neutral-800/80 pb-2">
+        <span class="font-mono text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+          Largest Files
+        </span>
+        <span class="font-mono text-[10px] text-neutral-500">Bytes</span>
+      </div>
+      <div class="space-y-2">
+        {
+          structure.largestFiles.slice(0, 6).map((file) => (
+            <div class="flex items-center justify-between gap-2 font-mono text-xs">
+              <span class="truncate text-neutral-300" title={file.path}>
+                {file.name}
+              </span>
+              <div class="flex shrink-0 items-center gap-2">
+                {file.isGenerated && (
+                  <span class="rounded bg-neutral-800/80 px-1 py-0.5 text-[9px] text-neutral-400">
+                    build
+                  </span>
+                )}
+                <span class="text-[11px] font-semibold text-neutral-400">{file.formattedSize}</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </Card>
+
+    <!-- Column 2: Largest Directories -->
+    <Card class="space-y-3">
+      <div class="flex items-center justify-between border-b border-neutral-800/80 pb-2">
+        <span class="font-mono text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+          Largest Directories
+        </span>
+        <span class="font-mono text-[10px] text-neutral-500">Recursive Size</span>
+      </div>
+      <div class="space-y-2">
+        {
+          structure.largestDirectories.slice(0, 6).map((dir) => (
+            <div class="flex items-center justify-between gap-2 font-mono text-xs">
+              <div class="flex min-w-0 items-center gap-1.5">
+                <FolderTree className="h-3 w-3 text-neutral-500 shrink-0" />
+                <span class="truncate text-neutral-300" title={dir.path}>
+                  {dir.path}
+                </span>
+              </div>
+              <div class="flex shrink-0 items-center gap-2">
+                <span class="text-[10px] text-neutral-500">{dir.fileCount}f</span>
+                <span class="text-[11px] font-semibold text-neutral-400">{dir.formattedSize}</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </Card>
+
+    <!-- Column 3: Hierarchy Depth & File Extensions -->
+    <Card class="space-y-3">
+      <div class="flex items-center justify-between border-b border-neutral-800/80 pb-2">
+        <span class="font-mono text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+          Structure & Types
+        </span>
+        <span
+          class="rounded border border-neutral-800 bg-neutral-900 px-1.5 py-0.5 font-mono text-[10px] text-cyan-400"
+        >
+          Max Depth: {structure.maxDepth}
+        </span>
+      </div>
+      <div class="space-y-2">
+        {
+          structure.fileTypes.slice(0, 6).map((ft) => (
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="font-medium text-neutral-300">{ft.label}</span>
+              <div class="flex items-center gap-3 text-[11px]">
+                <span class="text-neutral-500">{ft.fileCount} files</span>
+                <span class="font-semibold text-neutral-400">{ft.percentageBytes.toFixed(1)}%</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </Card>
+  </div>
+
+  <!-- Methodology & Provenance Disclosure Alert -->
+  <div
+    class="rounded-lg border border-neutral-800/80 bg-neutral-900/40 p-3.5 font-mono text-xs leading-relaxed text-neutral-400"
+  >
+    <div class="mb-1 flex items-center gap-2 font-semibold text-neutral-300">
+      <Info className="h-3.5 w-3.5 text-cyan-400" />
+      <span>Metric Methodology & Provenance</span>
+    </div>
+    <p class="text-[11px]">
+      All metrics are derived 100% deterministically from GitHub REST APIs, recursive Git tree
+      inspection, and language-specific AST/LOC parsers. No AI, LLMs, or heuristic guessing are
+      used. Code lines are calculated using concrete syntax rules (blanks, single-line, and block
+      comment detection). Excluded vendor and build directories (<code class="text-neutral-300"
+        >node_modules</code
+      >, <code class="text-neutral-300">dist</code>, <code class="text-neutral-300">vendor</code>, <code
+        class="text-neutral-300">.git</code
+      >, lockfiles) are filtered to avoid skewing repository statistics.
+    </p>
+  </div>
+</div>

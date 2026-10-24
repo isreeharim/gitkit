@@ -222,3 +222,41 @@ GitKit requires understanding relationships between source files and external pa
 
 - **Pros**: 100% reproducible and verifiable; zero AI hallucination; fast execution; pure testability with 99 unit tests; clean UI with responsive dark theme.
 - **Cons**: Large repositories fetch a prioritized subset of source files to respect GitHub API rate limits; users can inspect full manifests and prioritized modules.
+
+---
+
+## ADR 010: Deterministic Repository Statistics & Metrics Engine, Concrete LOC Counting, and Exclusion Rules
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit requires rich repository metrics across code, structure, repository metadata, and activity. Under GitKit's core principles:
+
+1. All metrics must be 100% deterministic, reproducible, and derived from actual repository structures or official GitHub APIs.
+2. Never invent numbers, fake code metrics, or use AI to guess maintainability or code sizes.
+3. Clearly label data provenance, calculation methodology, and approximation boundaries (e.g. sampled LOC vs tree-level counts).
+4. Explicitly exclude vendor, build, package cache, and minified artifacts from clean source metrics.
+
+### Decision
+
+1. **Decoupled Metrics Engine (`src/lib/metrics/`)**:
+   - `types.ts`: Rich typed models (`MetricItem<T>`, `LanguageMetric`, `FileTypeMetric`, `LargestFileMetric`, `DirectorySizeMetric`, `DeepestPathMetric`, `LocAnalysisResult`, `StructureMetrics`, `ActivityMetrics`, `RepositoryMetricsReport`). Every metric carries explicit `source`, `calculationMethod`, `unit`, and `confidence` fields.
+   - `language-detector.ts`: Linguist-aligned extension and filename lookup database for 35+ languages and canonical color codes.
+   - `exclusion-rules.ts`: Explicit directory (`node_modules`, `dist`, `vendor`, `target`, `.git`, `.next`, etc.), lockfile, and minified bundle filters.
+   - `loc-counter.ts`: Deterministic line-of-code, blank, and comment parser across multiple comment syntax families (C-style, Python/hash-style, HTML-style, SQL-style, CSS-style).
+   - `structure-analyzer.ts`: Recursive bottom-up directory size aggregation, deepest path hierarchy discovery, largest files and directories, and language/file-type distributions.
+   - `metrics-engine.ts`: Normalized report construction assembling metadata, tree, LOC, and activity metrics.
+2. **Activity Metrics without Rate Limit Burn**:
+   - Commit counts and contributor counts are extracted via GitHub's `Link` pagination header (`per_page=1&anon=true` and reading the `rel="last"` page parameter), obtaining the exact total count in a single lightweight HTTP request.
+3. **Transparent Sampling and Provenance UI (`RepoMetricsDashboard.astro`)**:
+   - Displays proportional multi-segment language distribution bar with color legend.
+   - Provides summary metric cards with clear "Sampled" badges and exact methodology notes.
+   - Renders structural breakdowns for largest files, largest directories, and deepest tree paths.
+
+### Consequences
+
+- **Pros**: 100% deterministic, zero LLM guesswork, strict transparency on approximation boundaries, fast edge-compatible execution, and comprehensive unit tests.
+- **Cons**: LOC analysis on very large repositories is calculated from prioritized entrypoints and shallow source files to respect edge runtime timeouts and rate limits.

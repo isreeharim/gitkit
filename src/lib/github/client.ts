@@ -90,6 +90,8 @@ export interface IGitHubClient {
   fetchTree(owner: string, repo: string, treeSha: string): Promise<RawGitHubTree>;
   fetchBlobContent(owner: string, repo: string, fileSha: string): Promise<string | null>;
   fetchFileContent(owner: string, repo: string, path: string, ref?: string): Promise<string | null>;
+  fetchCommitCount?(owner: string, repo: string): Promise<number | null>;
+  fetchContributorCount?(owner: string, repo: string): Promise<number | null>;
 }
 
 export interface GitHubClientOptions {
@@ -209,6 +211,55 @@ export class GitHubClient implements IGitHubClient {
         return decodeBase64Utf8(response.data.content);
       }
       return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Fetches the total commit count on the default branch using the Link header pagination trick.
+   */
+  async fetchCommitCount(owner: string, repo: string): Promise<number | null> {
+    try {
+      const response = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        per_page: 1,
+      });
+
+      const linkHeader = response.headers.link;
+      if (linkHeader) {
+        const lastMatch = /<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/.exec(linkHeader);
+        if (lastMatch) {
+          return parseInt(lastMatch[1], 10);
+        }
+      }
+      return Array.isArray(response.data) ? response.data.length : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Fetches the total contributor count using the Link header pagination trick.
+   */
+  async fetchContributorCount(owner: string, repo: string): Promise<number | null> {
+    try {
+      const response = await this.octokit.rest.repos.listContributors({
+        owner,
+        repo,
+        per_page: 1,
+        anon: 'true',
+      });
+
+      const linkHeader = response.headers.link;
+      if (linkHeader) {
+        const lastMatch = /<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/.exec(linkHeader);
+        if (lastMatch) {
+          return parseInt(lastMatch[1], 10);
+        }
+      }
+      return Array.isArray(response.data) ? response.data.length : null;
     } catch {
       return null;
     }

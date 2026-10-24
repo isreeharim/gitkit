@@ -67,7 +67,21 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 5: Production Hardening & Custom Domain Launch
+## Phase 5: Repository Statistics & Metrics Engine (Completed)
+
+- [x] Deterministic repository metrics engine (`src/lib/metrics/metrics-engine.ts`)
+- [x] Typed metric models with explicit unit, source, calculationMethod, and confidence levels (`src/types/metrics.ts`)
+- [x] Linguist-aligned language detection and canonical color mapping (`src/lib/metrics/language-detector.ts`)
+- [x] Explicit exclusion rules for vendor/build/cache directories, lockfiles, and minified bundles (`src/lib/metrics/exclusion-rules.ts`)
+- [x] Concrete multi-syntax line-of-code, blank, and comment counter (`src/lib/metrics/loc-counter.ts`)
+- [x] Recursive structure analyzer: deepest paths, directory size aggregation, largest files and directories (`src/lib/metrics/structure-analyzer.ts`)
+- [x] Activity metrics extraction (commit count & contributor count via single-request pagination Link headers)
+- [x] Polished repository statistics dashboard with language composition bar and methodology notice (`src/components/repository/RepoMetricsDashboard.astro`)
+- [x] Full unit test suite (20 tests in metrics suite, 119 total unit tests) and Playwright E2E tests
+
+---
+
+## Phase 6: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

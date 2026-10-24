@@ -22,6 +22,13 @@ import {
   parseSourceImports,
 } from '@/lib/parser';
 import { buildDependencyGraph } from '@/lib/analyzer';
+import {
+  buildRepositoryMetricsReport,
+  countLinesOfCode,
+  isSourceCodeFile,
+  isGeneratedOrVendor,
+} from '@/lib/metrics';
+import type { RepositoryMetricsReport, LocAnalysisResult, ActivityMetrics } from '@/types/metrics';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -280,6 +287,102 @@ export class RepositoryService {
       parsedFiles,
       allRepoPaths,
       manifests,
+    });
+  }
+
+  /**
+   * Deterministically calculates comprehensive repository metrics report.
+   */
+  async calculateMetrics(
+    owner: string,
+    repo: string,
+    metadata: RepositoryMetadata,
+    tree: RepositoryTree,
+    maxSourceFilesForLoc = 20
+  ): Promise<RepositoryMetricsReport> {
+    // 1. Fetch activity metrics concurrently (commit and contributor counts)
+    let commitCount: number | null = null;
+    let contributorCount: number | null = null;
+
+    try {
+      const [commits, contributors] = await Promise.all([
+        this.client.fetchCommitCount ? this.client.fetchCommitCount(owner, repo) : null,
+        this.client.fetchContributorCount ? this.client.fetchContributorCount(owner, repo) : null,
+      ]);
+      commitCount = commits;
+      contributorCount = contributors;
+    } catch {
+      // Graceful fallback: metrics remain null/unavailable without failing ingestion
+    }
+
+    const activity: ActivityMetrics = {
+      commitCount,
+      contributorCount,
+      isCommitCountApproximate: false,
+      isContributorCountApproximate: false,
+    };
+
+    // 2. Sample prioritized source files for LOC, blank, and comment counting
+    const candidateFiles = tree.entries.filter(
+      (e) => e.type === 'blob' && isSourceCodeFile(e.path) && !isGeneratedOrVendor(e.path)
+    );
+
+    // Prioritize entry points and primary modules
+    candidateFiles.sort((a, b) => {
+      const isEntryA = /^(src\/)?(index|main|app|server)\.[a-z]+$/i.test(a.path);
+      const isEntryB = /^(src\/)?(index|main|app|server)\.[a-z]+$/i.test(b.path);
+      if (isEntryA && !isEntryB) return -1;
+      if (!isEntryA && isEntryB) return 1;
+      return a.path.length - b.path.length;
+    });
+
+    const sampledEntries = candidateFiles.slice(0, maxSourceFilesForLoc);
+
+    let totalLines = 0;
+    let codeLines = 0;
+    let commentLines = 0;
+    let blankLines = 0;
+    let analyzedFilesCount = 0;
+
+    await Promise.all(
+      sampledEntries.map(async (entry) => {
+        try {
+          const content = await this.client.fetchBlobContent(owner, repo, entry.sha);
+          if (content !== null) {
+            const counts = countLinesOfCode(content, entry.path);
+            totalLines += counts.totalLines;
+            codeLines += counts.codeLines;
+            commentLines += counts.commentLines;
+            blankLines += counts.blankLines;
+            analyzedFilesCount++;
+          }
+        } catch {
+          // Gracefully skip unreadable blobs
+        }
+      })
+    );
+
+    const isSampled = candidateFiles.length > analyzedFilesCount;
+    const samplingNote = isSampled
+      ? `Measured across ${analyzedFilesCount} of ${candidateFiles.length} source files (deterministic prioritization).`
+      : `Measured across all ${analyzedFilesCount} source files.`;
+
+    const locResult: LocAnalysisResult = {
+      totalLines,
+      codeLines,
+      commentLines,
+      blankLines,
+      analyzedFilesCount,
+      isSampled,
+      samplingNote,
+    };
+
+    // 3. Assemble normalized report
+    return buildRepositoryMetricsReport({
+      metadata,
+      tree,
+      locResult,
+      activity,
     });
   }
 }

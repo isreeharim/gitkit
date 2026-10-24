@@ -16,6 +16,12 @@ test.describe('GitKit Repository Route (/{owner}/{repo})', () => {
       await expect(page.getByText('Live Ingestion Active')).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Repository File Tree' })).toBeVisible();
 
+      // Verify deterministic metrics & statistics dashboard
+      await expect(
+        page.getByRole('heading', { name: /Repository Statistics & Deterministic Metrics/i })
+      ).toBeVisible();
+      await expect(page.getByText('Metric Methodology & Provenance')).toBeVisible();
+
       // Verify GitHub external link
       const githubLink = page.getByRole('link', { name: 'GitHub' });
       await expect(githubLink).toBeVisible();
