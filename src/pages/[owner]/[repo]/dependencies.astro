@@ -1,21 +1,9 @@
 ---
-import RootLayout from '../../../layouts/RootLayout.astro';
-import Badge from '../../../components/ui/Badge.astro';
+import RepoWorkspaceLayout from '../../../layouts/RepoWorkspaceLayout.astro';
 import RepoErrorView from '../../../components/repository/RepoErrorView.astro';
 import { DependencyGraphCanvas } from '../../../components/dependencies/DependencyGraphCanvas';
 import { validateRepoCoordinates } from '../../../lib/github/parse-repo-url';
 import { repositoryService } from '../../../lib/github/service';
-import {
-  ArrowLeft,
-  GitBranch,
-  ExternalLink,
-  GitFork,
-  Network,
-  GitCommit as GitCommitIcon,
-  GitPullRequest,
-  HeartPulse,
-  ShieldAlert,
-} from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 import type { DependencyGraph } from '../../../types/dependency';
 
@@ -48,138 +36,44 @@ const pageTitle = ingestionResult?.success
     : 'Repository Not Found — GitKit';
 ---
 
-<RootLayout title={pageTitle}>
-  <!-- Top Navigation Bar -->
-  <header
-    class="flex h-14 items-center justify-between border-b border-neutral-900 bg-neutral-950 px-4 sm:px-6"
-  >
-    <div class="flex items-center gap-3">
-      <a
-        href={`/${owner}/${repo}`}
-        class="flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900/80 px-2.5 py-1 font-mono text-xs text-neutral-300 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        <span class="hidden sm:inline">Overview</span>
-      </a>
-
-      <div class="flex items-center gap-2 font-mono text-xs text-neutral-400">
-        <a href="/" class="transition-colors hover:text-white">GitKit</a>
-        <span class="text-neutral-700">/</span>
-        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{owner}</a>
-        <span class="text-neutral-700">/</span>
-        <span class="font-semibold text-white">{repo}</span>
-        <span class="text-neutral-700">/</span>
-        <span class="flex items-center gap-1 font-medium text-cyan-400">
-          <GitFork className="h-3 w-3" />
-          <span>dependencies</span>
-        </span>
-      </div>
-    </div>
-
+<RepoWorkspaceLayout
+  owner={owner}
+  repo={repo}
+  activeSection="dependencies"
+  title={pageTitle}
+  metadata={ingestionResult?.success ? ingestionResult.metadata : undefined}
+  dependencyGraph={dependencyGraph || undefined}
+  fullWidth={true}
+>
+  <main class="relative h-[calc(100vh-104px)] w-full overflow-hidden">
     {
-      ingestionResult?.success && dependencyGraph && (
-        <div class="flex items-center gap-3">
-          <a
-            href={`/${owner}/${repo}/map`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <Network className="h-3 w-3 text-emerald-400" />
-            <span>Repo Map</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/git`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitCommitIcon className="h-3 w-3 text-rose-400" />
-            <span>Git History</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/pulls`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitPullRequest className="h-3 w-3 text-purple-400" />
-            <span>Pull Requests</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/health`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <HeartPulse className="h-3 w-3 text-emerald-400" />
-            <span>Health</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/security`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <ShieldAlert className="h-3 w-3 text-rose-400" />
-            <span>Security</span>
-          </a>
-
-          <div class="hidden items-center gap-1.5 font-mono text-xs text-neutral-400 sm:flex">
-            <GitBranch className="h-3 w-3 text-neutral-500" />
-            <span class="text-neutral-300">{ingestionResult.metadata.defaultBranch}</span>
-            <span class="text-neutral-700">•</span>
-            <span>{dependencyGraph.stats.analyzedFiles} analyzed</span>
-          </div>
-
-          <a
-            href={ingestionResult.metadata.htmlUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hidden items-center gap-1 font-mono text-xs text-neutral-400 transition-colors hover:text-neutral-200 sm:flex"
-          >
-            <span>GitHub</span>
-            <ExternalLink className="h-3 w-3" />
-          </a>
-
-          <Badge variant="info" class="text-[11px]">
-            Dependency Graph
-          </Badge>
-        </div>
-      )
-    }
-  </header>
-
-  <!-- Main Viewport -->
-  <main class="relative h-[calc(100vh-57px)] w-full overflow-hidden">
-    {
-      !validation.isValid && (
+      !validation.isValid ? (
         <div class="mx-auto max-w-4xl p-6 sm:p-12">
           <RepoErrorView
             owner={owner}
             repo={repo}
             error={{
-              kind: 'invalid_repo',
-              message: validation.error ?? 'Invalid repository coordinates.',
               status: 404,
+              code: 'invalid_coordinates',
+              message: validation.error ?? 'Invalid repository coordinates.',
             }}
           />
         </div>
-      )
-    }
-
-    {
-      validation.isValid && ingestionResult && !ingestionResult.success && (
+      ) : ingestionResult && !ingestionResult.success ? (
         <div class="mx-auto max-w-4xl p-6 sm:p-12">
           <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
         </div>
-      )
-    }
-
-    {
-      validation.isValid && ingestionResult && ingestionResult.success && dependencyGraph && (
-        <DependencyGraphCanvas
-          client:load
-          graph={dependencyGraph}
-          owner={owner}
-          repo={repo}
-          defaultBranch={ingestionResult.metadata.defaultBranch}
-        />
+      ) : (
+        ingestionResult &&
+        ingestionResult.success &&
+        dependencyGraph && (
+          <DependencyGraphCanvas
+            client:load
+            metadata={ingestionResult.metadata}
+            graph={dependencyGraph}
+          />
+        )
       )
     }
   </main>
-</RootLayout>
+</RepoWorkspaceLayout>

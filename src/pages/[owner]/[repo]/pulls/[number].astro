@@ -1,6 +1,5 @@
 ---
-import RootLayout from '../../../../layouts/RootLayout.astro';
-import Badge from '../../../../components/ui/Badge.astro';
+import RepoWorkspaceLayout from '../../../../layouts/RepoWorkspaceLayout.astro';
 import RepoErrorView from '../../../../components/repository/RepoErrorView.astro';
 import PullRequestHeader from '../../../../components/pulls/PullRequestHeader.astro';
 import PullRequestImpactSummary from '../../../../components/pulls/PullRequestImpactSummary.astro';
@@ -8,7 +7,7 @@ import PullRequestImpactView from '../../../../components/pulls/PullRequestImpac
 import PullRequestFilesList from '../../../../components/pulls/PullRequestFilesList.astro';
 import { validateRepoCoordinates } from '../../../../lib/github/parse-repo-url';
 import { repositoryService } from '../../../../lib/github/service';
-import { ArrowLeft, Network, GitFork, GitCommit, HeartPulse, ShieldAlert } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../../types/repository';
 import type { PullRequestImpactReport } from '../../../../types/pull-request';
 import type { DependencyGraph } from '../../../../types/dependency';
@@ -60,142 +59,73 @@ const pageTitle = impactReport
     : 'Pull Request Not Found — GitKit';
 ---
 
-<RootLayout title={pageTitle}>
-  {/* Top Navigation Header */}
-  <header
-    class="flex h-14 items-center justify-between border-b border-neutral-900 bg-neutral-950 px-4 sm:px-6"
-  >
-    <div class="flex items-center gap-3">
-      <a
-        href={`/${owner}/${repo}/pulls`}
-        class="flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900/80 px-2.5 py-1 font-mono text-xs text-neutral-300 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        <span class="hidden sm:inline">All Pull Requests</span>
-      </a>
-
-      <div class="flex items-center gap-2 font-mono text-xs text-neutral-400">
-        <a href="/" class="transition-colors hover:text-white">GitKit</a>
-        <span class="text-neutral-700">/</span>
-        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{owner}</a>
-        <span class="text-neutral-700">/</span>
-        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{repo}</a>
-        <span class="text-neutral-700">/</span>
-        <a href={`/${owner}/${repo}/pulls`} class="text-neutral-400 hover:text-white">pulls</a>
-        <span class="text-neutral-700">/</span>
-        <span class="font-semibold text-purple-400">#{prNumber}</span>
-      </div>
-    </div>
-
-    {
-      ingestionResult?.success && (
-        <div class="flex items-center gap-3">
+<RepoWorkspaceLayout
+  owner={owner}
+  repo={repo}
+  activeSection="pulls"
+  title={pageTitle}
+  metadata={ingestionResult?.success ? ingestionResult.metadata : undefined}
+>
+  {
+    !validation.isValid || !isPrNumberValid ? (
+      <RepoErrorView
+        owner={owner}
+        repo={repo}
+        error={{
+          status: 404,
+          code: 'invalid_coordinates',
+          message: isPrNumberValid
+            ? (validation.error ?? 'Invalid repository coordinates.')
+            : 'Invalid Pull Request number provided.',
+        }}
+      />
+    ) : ingestionResult && !ingestionResult.success ? (
+      <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
+    ) : !impactReport ? (
+      <RepoErrorView
+        owner={owner}
+        repo={repo}
+        error={{
+          status: 404,
+          code: 'pr_not_found',
+          message: `Pull request #${prNumber} was not found on repository ${owner}/${repo}.`,
+        }}
+      />
+    ) : (
+      <div class="space-y-6">
+        {/* Back to PRs navigation */}
+        <div>
           <a
-            href={`/${owner}/${repo}/map`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+            href={`/${owner}/${repo}/pulls`}
+            class="inline-flex items-center gap-1.5 font-mono text-xs text-neutral-400 transition-colors hover:text-white"
           >
-            <Network className="h-3 w-3 text-emerald-400" />
-            <span>Repo Map</span>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to All Pull Requests</span>
           </a>
-
-          <a
-            href={`/${owner}/${repo}/dependencies`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitFork className="h-3 w-3 text-cyan-400" />
-            <span>Dependencies</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/git`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitCommit className="h-3 w-3 text-rose-400" />
-            <span>Git History</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/health`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <HeartPulse className="h-3 w-3 text-emerald-400" />
-            <span>Health</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/security`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <ShieldAlert className="h-3 w-3 text-rose-400" />
-            <span>Security</span>
-          </a>
-
-          <Badge variant="purple" class="text-[11px]">
-            PR Impact Analyzer
-          </Badge>
         </div>
-      )
-    }
-  </header>
 
-  {/* Main Container */}
-  <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-    {
-      (!validation.isValid || !isPrNumberValid) && (
-        <RepoErrorView
+        {/* PR Header with title, state, dates, branch info */}
+        <PullRequestHeader pr={impactReport.pr} />
+
+        {/* PR Impact Summary KPI cards */}
+        <PullRequestImpactSummary impact={impactReport.impact} pr={impactReport.pr} />
+
+        {/* Impact Visualizer (Downstream module blast radius) */}
+        <PullRequestImpactView
+          impact={impactReport.impact}
           owner={owner}
           repo={repo}
-          error={{
-            kind: 'invalid_repo',
-            message: !validation.isValid
-              ? (validation.error ?? 'Invalid repository coordinates.')
-              : `Invalid pull request number "${number}". Pull request numbers must be positive integers.`,
-            status: 404,
-          }}
+          hasDependencyGraph={!!dependencyGraph}
         />
-      )
-    }
 
-    {
-      validation.isValid && isPrNumberValid && ingestionResult && !ingestionResult.success && (
-        <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
-      )
-    }
-
-    {
-      validation.isValid &&
-        isPrNumberValid &&
-        ingestionResult &&
-        ingestionResult.success &&
-        !impactReport && (
-          <RepoErrorView
-            owner={owner}
-            repo={repo}
-            error={{
-              kind: 'not_found',
-              message: `Pull Request #${prNumber} was not found on repository "${owner}/${repo}".`,
-              status: 404,
-            }}
-          />
-        )
-    }
-
-    {
-      validation.isValid &&
-        isPrNumberValid &&
-        ingestionResult &&
-        ingestionResult.success &&
-        impactReport && (
-          <div class="space-y-8">
-            <PullRequestHeader pr={impactReport.pr} />
-
-            <PullRequestImpactSummary report={impactReport} />
-
-            <PullRequestImpactView report={impactReport} />
-
-            <PullRequestFilesList files={impactReport.pr.files} />
-          </div>
-        )
-    }
-  </main>
-</RootLayout>
+        {/* Changed Files Table */}
+        <PullRequestFilesList
+          files={impactReport.files}
+          owner={owner}
+          repo={repo}
+          impact={impactReport.impact}
+        />
+      </div>
+    )
+  }
+</RepoWorkspaceLayout>

@@ -1,0 +1,134 @@
+---
+import {
+  Network,
+  GitFork,
+  GitCommit,
+  GitPullRequest,
+  HeartPulse,
+  ShieldAlert,
+  ArrowRight,
+} from 'lucide-react';
+
+interface Props {
+  owner: string;
+  repo: string;
+}
+
+const { owner, repo } = Astro.props;
+const baseUrl = `/${owner}/${repo}`;
+
+const tools = [
+  {
+    title: 'Interactive Repo Map',
+    path: `${baseUrl}/map`,
+    desc: 'Interactive tree hierarchy visualization with directory collapsing, progressive expansion, and search.',
+    icon: Network,
+    badge: 'Structure',
+    color: 'emerald',
+    borderColor: 'hover:border-emerald-500/60',
+    iconColor: 'text-emerald-400',
+  },
+  {
+    title: 'Dependency Graph',
+    path: `${baseUrl}/dependencies`,
+    desc: 'Deterministic module resolution, internal file imports vs external packages, and cycle detection.',
+    icon: GitFork,
+    badge: 'Architecture',
+    color: 'cyan',
+    borderColor: 'hover:border-cyan-500/60',
+    iconColor: 'text-cyan-400',
+  },
+  {
+    title: 'Git History & Hotspots',
+    path: `${baseUrl}/git`,
+    desc: 'Commit timeline, weekly churn velocity, and logarithmic code hotspot ranking without AI fuzziness.',
+    icon: GitCommit,
+    badge: 'Evolution',
+    color: 'blue',
+    borderColor: 'hover:border-blue-500/60',
+    iconColor: 'text-blue-400',
+  },
+  {
+    title: 'Pull Request Analyzer',
+    path: `${baseUrl}/pulls`,
+    desc: 'Deterministic PR blast radius analysis, changed files, directory concentration, and downstream impact.',
+    icon: GitPullRequest,
+    badge: 'Reviews',
+    color: 'purple',
+    borderColor: 'hover:border-purple-500/60',
+    iconColor: 'text-purple-400',
+  },
+  {
+    title: 'Repository Health',
+    path: `${baseUrl}/health`,
+    desc: 'Rule-based health score across 7 categories (docs, tests, hygiene, deps, structure, activity, security).',
+    icon: HeartPulse,
+    badge: 'Hygiene',
+    color: 'emerald',
+    borderColor: 'hover:border-emerald-500/60',
+    iconColor: 'text-emerald-400',
+  },
+  {
+    title: 'Security Audit',
+    path: `${baseUrl}/security`,
+    desc: 'Gitleaks-compatible secret detection, OpenSSF OSV vulnerability mapping, and config inspection.',
+    icon: ShieldAlert,
+    badge: 'Vulnerabilities',
+    color: 'rose',
+    borderColor: 'hover:border-rose-500/60',
+    iconColor: 'text-rose-400',
+  },
+];
+---
+
+<div>
+  <div class="mb-3.5 flex items-center justify-between">
+    <div>
+      <h2 class="font-mono text-sm font-bold tracking-wider text-white uppercase">
+        Repository Analysis Engines
+      </h2>
+      <p class="font-mono text-[11px] text-neutral-400">
+        Deterministic, verifiable tools • Zero AI heuristics
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+    {
+      tools.map((t) => {
+        const Icon = t.icon;
+        return (
+          <a
+            href={t.path}
+            class={`group flex flex-col justify-between rounded-xl border border-neutral-800 bg-[#0e1217] p-4.5 font-mono transition-all duration-150 hover:-translate-y-0.5 hover:bg-neutral-900/60 ${t.borderColor}`}
+          >
+            <div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div
+                    class={`rounded-md border border-neutral-700 bg-neutral-800/80 p-1.5 ${t.iconColor}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span class="text-xs font-bold text-white group-hover:text-emerald-300">
+                    {t.title}
+                  </span>
+                </div>
+                <span class="rounded border border-neutral-800 bg-neutral-900 px-1.5 py-0.5 text-[9px] text-neutral-400 uppercase">
+                  {t.badge}
+                </span>
+              </div>
+
+              <p class="mt-2.5 text-[11px] leading-relaxed text-neutral-400">{t.desc}</p>
+            </div>
+
+            <div class="mt-4 flex items-center justify-end text-[11px] font-semibold text-neutral-400 group-hover:text-white">
+              <span class="mr-1">Open Tool</span>
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </div>
+          </a>
+        );
+      })
+    }
+  </div>
+</div>

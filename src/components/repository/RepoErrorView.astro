@@ -6,7 +6,8 @@ import { formatDate } from '@/lib/utils';
 interface Props {
   owner: string;
   repo: string;
-  error: RepositoryIngestionError;
+  error:
+    RepositoryIngestionError | { kind?: string; code?: string; message: string; status?: number };
 }
 
 const { owner, repo, error } = Astro.props;
@@ -14,7 +15,13 @@ const { owner, repo, error } = Astro.props;
 let errorTitle = 'Unable to Ingest Repository';
 let errorDescription = error.message;
 
-switch (error.kind) {
+const errorKind =
+  error.kind === 'invalid_repo' ||
+  ('code' in error && (error as { code?: string }).code === 'invalid_coordinates')
+    ? 'invalid_repo'
+    : error.kind;
+
+switch (errorKind) {
   case 'invalid_repo':
     errorTitle = 'Invalid Repository Coordinates';
     errorDescription = error.message;

@@ -1,0 +1,306 @@
+---
+import {
+  Network,
+  GitFork,
+  GitCommit,
+  GitPullRequest,
+  HeartPulse,
+  ShieldAlert,
+  LayoutDashboard,
+  Star,
+  GitBranch,
+  ExternalLink,
+  Lock,
+  Globe,
+} from 'lucide-react';
+import Badge from '../ui/Badge.astro';
+import { ExportControl } from '../export/ExportControl';
+import { formatCompactNumber } from '@/lib/utils';
+import type { RepositoryMetadata } from '@/types/repository';
+import type { RepoGraph } from '@/lib/graph/graph-model';
+import type { DependencyGraph } from '@/types/dependency';
+import type { RepositoryMetricsReport } from '@/types/metrics';
+import type { RepositoryHealthReport } from '@/types/health';
+import type { SecurityReport } from '@/types/security';
+
+import type { WorkspaceSection } from '@/types/workspace';
+export type { WorkspaceSection };
+
+interface Props {
+  owner: string;
+  repo: string;
+  activeSection: WorkspaceSection;
+  metadata?: RepositoryMetadata;
+  repoGraph?: RepoGraph;
+  dependencyGraph?: DependencyGraph;
+  metricsReport?: RepositoryMetricsReport;
+  healthReport?: RepositoryHealthReport;
+  securityReport?: SecurityReport;
+  counts?: {
+    pulls?: number;
+    healthScore?: number;
+    securityAlerts?: number;
+  };
+}
+
+const {
+  owner,
+  repo,
+  activeSection,
+  metadata,
+  repoGraph,
+  dependencyGraph,
+  metricsReport,
+  healthReport,
+  securityReport,
+  counts,
+} = Astro.props;
+
+const baseUrl = `/${owner}/${repo}`;
+
+const navTabs = [
+  {
+    id: 'overview' as WorkspaceSection,
+    label: 'Overview',
+    href: baseUrl,
+    icon: LayoutDashboard,
+    badge: undefined,
+  },
+  {
+    id: 'map' as WorkspaceSection,
+    label: 'Map',
+    href: `${baseUrl}/map`,
+    icon: Network,
+    badge: undefined,
+  },
+  {
+    id: 'dependencies' as WorkspaceSection,
+    label: 'Dependencies',
+    href: `${baseUrl}/dependencies`,
+    icon: GitFork,
+    badge: undefined,
+  },
+  {
+    id: 'git' as WorkspaceSection,
+    label: 'Git',
+    href: `${baseUrl}/git`,
+    icon: GitCommit,
+    badge: undefined,
+  },
+  {
+    id: 'pulls' as WorkspaceSection,
+    label: 'Pull Requests',
+    href: `${baseUrl}/pulls`,
+    icon: GitPullRequest,
+    badge: counts?.pulls !== undefined ? String(counts.pulls) : undefined,
+  },
+  {
+    id: 'health' as WorkspaceSection,
+    label: 'Health',
+    href: `${baseUrl}/health`,
+    icon: HeartPulse,
+    badge: counts?.healthScore !== undefined ? `${counts.healthScore}%` : undefined,
+  },
+  {
+    id: 'security' as WorkspaceSection,
+    label: 'Security',
+    href: `${baseUrl}/security`,
+    icon: ShieldAlert,
+    badge:
+      counts?.securityAlerts !== undefined && counts.securityAlerts > 0
+        ? String(counts.securityAlerts)
+        : undefined,
+    badgeVariant:
+      counts?.securityAlerts !== undefined && counts.securityAlerts > 0 ? 'rose' : undefined,
+  },
+];
+---
+
+<header class="w-full border-b border-neutral-800 bg-[#0c1014] text-neutral-200">
+  <!-- Top Repository Identity & Actions Bar -->
+  <div
+    class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6"
+  >
+    <!-- Breadcrumb & Identity -->
+    <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+      <a
+        href="/"
+        class="flex items-center gap-1.5 font-mono text-neutral-400 transition-colors hover:text-white"
+        title="GitKit Home"
+      >
+        <span
+          class="flex h-5 w-5 items-center justify-center rounded border border-emerald-500/30 bg-emerald-500/10 text-[10px] font-bold text-emerald-400"
+        >
+          gk
+        </span>
+        <span class="font-semibold text-neutral-300">GitKit</span>
+      </a>
+
+      <span class="font-mono text-neutral-600">/</span>
+
+      <a
+        href={`/${owner}/${repo}`}
+        class="font-mono text-neutral-300 transition-colors hover:text-white"
+      >
+        {owner}
+      </a>
+
+      <span class="font-mono text-neutral-600">/</span>
+
+      <a
+        href={`/${owner}/${repo}`}
+        class="font-mono font-bold text-white transition-colors hover:text-emerald-400"
+      >
+        {repo}
+      </a>
+
+      {
+        metadata && (
+          <div class="ml-1.5 flex items-center gap-1.5">
+            <span class="inline-flex items-center gap-1 rounded-full border border-neutral-800 bg-neutral-900/80 px-2 py-0.5 text-[10px] font-medium text-neutral-400">
+              {metadata.visibility === 'private' ? (
+                <Lock className="h-2.5 w-2.5" />
+              ) : (
+                <Globe className="h-2.5 w-2.5" />
+              )}
+              <span class="capitalize">{metadata.visibility}</span>
+            </span>
+
+            {metadata.isArchived && (
+              <Badge
+                variant="outline"
+                class="border-amber-900/60 bg-amber-950/40 text-[10px] text-amber-400"
+              >
+                Archived
+              </Badge>
+            )}
+
+            {metadata.isFork && (
+              <Badge variant="outline" class="border-neutral-800 text-[10px] text-neutral-400">
+                Fork
+              </Badge>
+            )}
+          </div>
+        )
+      }
+    </div>
+
+    <!-- Actions & Metadata Stats -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      {
+        metadata && (
+          <div class="hidden items-center gap-3 font-mono text-xs text-neutral-400 sm:flex">
+            <div
+              class="flex items-center gap-1 text-neutral-300"
+              title={`Stars: ${metadata.stars}`}
+            >
+              <Star className="h-3 w-3 text-amber-400" />
+              <span>{formatCompactNumber(metadata.stars)}</span>
+            </div>
+
+            <div
+              class="flex items-center gap-1 text-neutral-300"
+              title={`Forks: ${metadata.forks}`}
+            >
+              <GitFork className="h-3 w-3 text-neutral-400" />
+              <span>{formatCompactNumber(metadata.forks)}</span>
+            </div>
+
+            <div class="flex items-center gap-1 text-neutral-400" title="Default Branch">
+              <GitBranch className="h-3 w-3 text-neutral-500" />
+              <span class="max-w-[120px] truncate text-neutral-300">{metadata.defaultBranch}</span>
+            </div>
+
+            {dependencyGraph && activeSection === 'dependencies' && (
+              <div class="flex items-center gap-1 font-mono text-xs text-neutral-400">
+                <span class="text-neutral-700">•</span>
+                <span class="text-neutral-300">{dependencyGraph.stats.analyzedFiles} analyzed</span>
+              </div>
+            )}
+
+            <a
+              href={metadata.htmlUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Repository Source"
+              class="inline-flex items-center gap-1 rounded border border-neutral-800 bg-neutral-900 px-2 py-1 text-neutral-300 transition-colors hover:border-neutral-700 hover:text-white"
+              title="Open repository on GitHub"
+            >
+              <span>Source</span>
+              <ExternalLink className="h-3 w-3 text-neutral-400" />
+            </a>
+          </div>
+        )
+      }
+
+      {
+        metadata && (
+          <ExportControl
+            client:load
+            owner={owner}
+            repo={repo}
+            defaultTarget={
+              activeSection === 'map'
+                ? 'repomap'
+                : activeSection === 'dependencies'
+                  ? 'dependencies'
+                  : 'bundle'
+            }
+            repoGraph={repoGraph}
+            dependencyGraph={dependencyGraph}
+            metadata={metadata}
+            metricsReport={metricsReport}
+            healthReport={healthReport}
+            securityReport={securityReport}
+          />
+        )
+      }
+    </div>
+  </div>
+
+  <!-- Primary Navigation Tabs -->
+  <div class="border-t border-neutral-800/80 bg-neutral-950/60 px-4 sm:px-6">
+    <div class="mx-auto max-w-7xl">
+      <nav
+        aria-label="Repository navigation"
+        class="flex scrollbar-none items-center gap-1 overflow-x-auto py-1"
+      >
+        {
+          navTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeSection === tab.id;
+            return (
+              <a
+                href={tab.href}
+                data-section={tab.id}
+                aria-current={isActive ? 'page' : undefined}
+                class={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-mono text-xs font-medium whitespace-nowrap transition-colors ${
+                  isActive
+                    ? 'bg-neutral-800 text-white shadow-xs'
+                    : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200'
+                }`}
+              >
+                <Icon
+                  className={`h-3.5 w-3.5 ${isActive ? 'text-emerald-400' : 'text-neutral-500'}`}
+                />
+                <span>{tab.label}</span>
+
+                {tab.badge && (
+                  <span
+                    class={`py-0.2 ml-1 rounded px-1.5 text-[10px] font-semibold ${
+                      tab.badgeVariant === 'rose'
+                        ? 'border border-rose-800/60 bg-rose-950 text-rose-300'
+                        : 'border border-neutral-700 bg-neutral-800 text-neutral-300'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </a>
+            );
+          })
+        }
+      </nav>
+    </div>
+  </div>
+</header>

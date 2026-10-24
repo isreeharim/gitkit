@@ -163,9 +163,35 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 11: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 11: Unified GitKit Repository Workspace (Completed)
+
+- [x] Dedicated workspace models and navigation tab definitions (`src/types/workspace.ts`)
+- [x] Technical GitHub + Linear-styled repository workspace header (`src/components/layout/RepoWorkspaceHeader.astro`) with breadcrumbs, visibility badge, stars/forks/branch meta, external source link, and global export action
+- [x] Primary semantic navigation bar across all repository pages:
+  - [x] Overview (`/{owner}/{repo}`)
+  - [x] Map (`/{owner}/{repo}/map`)
+  - [x] Dependencies (`/{owner}/{repo}/dependencies`)
+  - [x] Git (`/{owner}/{repo}/git`)
+  - [x] Pull Requests (`/{owner}/{repo}/pulls`)
+  - [x] Health (`/{owner}/{repo}/health`)
+  - [x] Security (`/{owner}/{repo}/security`)
+  - [x] Export trigger modal across all workspaces
+- [x] Shared workspace container layout (`src/layouts/RepoWorkspaceLayout.astro`) supporting both constrained `max-w-7xl` and edge-to-edge `fullWidth` canvas views
+- [x] Executive Overview dashboard components:
+  - [x] `OverviewHealthSummary.astro`: Composite score, health rating tier badge, 7-category breakdown mini-bars, strengths & opportunities
+  - [x] `OverviewSecuritySummary.astro`: Severity counters (critical, high, medium, low, info), clean status badge, top findings preview
+  - [x] `OverviewActivitySummary.astro`: Lightweight commit history feed (5 commits, zero clone), author provenance, and last push timestamp
+  - [x] `OverviewToolsGrid.astro`: 6-engine launcher cards for jumping directly to deep analysis tools
+- [x] Preserved subroute state (e.g., Pull Requests filter `?state=open|closed|all`)
+- [x] Comprehensive unit test suite in `tests/unit/workspace-layout.test.ts` (192 total unit tests pass)
+- [x] End-to-end Playwright test suite in `tests/e2e/unified-workspace.spec.ts` (29 total E2E tests pass across 11 suites)
+
+---
+
+## Phase 12: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization
 - [ ] Purchase confirmation and DNS configuration for `gitkit.in`
 - [ ] Production SSL and security headers verification
+

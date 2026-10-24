@@ -1,5 +1,5 @@
 ---
-import RootLayout from '../../../layouts/RootLayout.astro';
+import RepoWorkspaceLayout from '../../../layouts/RepoWorkspaceLayout.astro';
 import Badge from '../../../components/ui/Badge.astro';
 import Card from '../../../components/ui/Card.astro';
 import RepoErrorView from '../../../components/repository/RepoErrorView.astro';
@@ -8,20 +8,7 @@ import GitActivityChart from '../../../components/git/GitActivityChart.astro';
 import GitCommitTimeline from '../../../components/git/GitCommitTimeline.astro';
 import { validateRepoCoordinates } from '../../../lib/github/parse-repo-url';
 import { repositoryService } from '../../../lib/github/service';
-import {
-  ArrowLeft,
-  GitBranch,
-  ExternalLink,
-  GitCommit as GitCommitIcon,
-  Flame,
-  Users,
-  Code2,
-  Network,
-  GitFork,
-  GitPullRequest,
-  HeartPulse,
-  ShieldAlert,
-} from 'lucide-react';
+import { Flame, Users, Code2, GitCommit as GitCommitIcon } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 import type { GitHistoryAnalysisReport } from '../../../types/git';
 
@@ -53,126 +40,55 @@ const pageTitle = ingestionResult?.success
     : 'Repository Not Found — GitKit';
 ---
 
-<RootLayout title={pageTitle}>
-  <!-- Top Navigation Header -->
-  <header
-    class="flex h-14 items-center justify-between border-b border-neutral-900 bg-neutral-950 px-4 sm:px-6"
-  >
-    <div class="flex items-center gap-3">
-      <a
-        href={`/${owner}/${repo}`}
-        class="flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900/80 px-2.5 py-1 font-mono text-xs text-neutral-300 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        <span class="hidden sm:inline">Overview</span>
-      </a>
+<RepoWorkspaceLayout
+  owner={owner}
+  repo={repo}
+  activeSection="git"
+  title={pageTitle}
+  metadata={ingestionResult?.success ? ingestionResult.metadata : undefined}
+>
+  {
+    !validation.isValid ? (
+      <RepoErrorView
+        owner={owner}
+        repo={repo}
+        error={{
+          status: 404,
+          code: 'invalid_coordinates',
+          message: validation.error ?? 'Invalid repository coordinates.',
+        }}
+      />
+    ) : ingestionResult && !ingestionResult.success ? (
+      <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
+    ) : (
+      ingestionResult &&
+      ingestionResult.success &&
+      gitReport && (
+        <div class="space-y-8">
+          {/* Header summary & Provenance */}
+          <div class="flex flex-col gap-4 border-b border-neutral-900 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 class="flex items-center gap-2 font-mono text-xl font-bold tracking-tight text-white sm:text-2xl">
+                <GitCommitIcon className="h-5 w-5 text-emerald-400" />
+                <span>Git History & Code Hotspots</span>
+              </h1>
+              <p class="mt-1 font-mono text-xs text-neutral-400">
+                Deterministic commit analysis on branch{' '}
+                <span class="text-white">{ingestionResult.metadata.defaultBranch}</span>
+              </p>
+            </div>
 
-      <div class="flex items-center gap-2 font-mono text-xs text-neutral-400">
-        <a href="/" class="transition-colors hover:text-white">GitKit</a>
-        <span class="text-neutral-700">/</span>
-        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{owner}</a>
-        <span class="text-neutral-700">/</span>
-        <span class="font-semibold text-white">{repo}</span>
-        <span class="text-neutral-700">/</span>
-        <span class="flex items-center gap-1 font-medium text-emerald-400">
-          <GitCommitIcon className="h-3 w-3" />
-          <span>git</span>
-        </span>
-      </div>
-    </div>
-
-    {
-      ingestionResult?.success && (
-        <div class="flex items-center gap-3">
-          <a
-            href={`/${owner}/${repo}/map`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <Network className="h-3 w-3 text-emerald-400" />
-            <span>Repo Map</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/dependencies`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitFork className="h-3 w-3 text-cyan-400" />
-            <span>Dependencies</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/pulls`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <GitPullRequest className="h-3 w-3 text-purple-400" />
-            <span>Pull Requests</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/health`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <HeartPulse className="h-3 w-3 text-emerald-400" />
-            <span>Health</span>
-          </a>
-
-          <a
-            href={`/${owner}/${repo}/security`}
-            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
-          >
-            <ShieldAlert className="h-3 w-3 text-rose-400" />
-            <span>Security</span>
-          </a>
-
-          <div class="hidden items-center gap-1.5 font-mono text-xs text-neutral-400 sm:flex">
-            <GitBranch className="h-3 w-3 text-neutral-500" />
-            <span class="text-neutral-300">{ingestionResult.metadata.defaultBranch}</span>
+            <div class="flex items-center gap-2">
+              <Badge variant="outline" class="border-neutral-800 text-xs">
+                {gitReport.summary.totalCommitsAnalyzed} commits analyzed
+              </Badge>
+              <Badge variant="outline" class="border-neutral-800 text-xs">
+                {gitReport.summary.uniqueFilesChangedCount} files changed
+              </Badge>
+            </div>
           </div>
 
-          <a
-            href={ingestionResult.metadata.htmlUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hidden items-center gap-1 font-mono text-xs text-neutral-400 transition-colors hover:text-neutral-200 sm:flex"
-          >
-            <span>GitHub</span>
-            <ExternalLink className="h-3 w-3" />
-          </a>
-
-          <Badge variant="success" class="text-[11px]">
-            Git History
-          </Badge>
-        </div>
-      )
-    }
-  </header>
-
-  <!-- Main Container -->
-  <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-    {
-      !validation.isValid && (
-        <RepoErrorView
-          owner={owner}
-          repo={repo}
-          error={{
-            kind: 'invalid_repo',
-            message: validation.error ?? 'Invalid repository coordinates.',
-            status: 404,
-          }}
-        />
-      )
-    }
-
-    {
-      validation.isValid && ingestionResult && !ingestionResult.success && (
-        <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
-      )
-    }
-
-    {
-      validation.isValid && ingestionResult && ingestionResult.success && gitReport && (
-        <div class="space-y-8">
-          {/* Summary Cards Grid */}
+          {/* 4 Summary Cards Grid */}
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Card class="space-y-1">
               <div class="flex items-center gap-1.5 font-mono text-xs text-neutral-400">
@@ -236,19 +152,19 @@ const pageTitle = ingestionResult?.success
             </Card>
           </div>
 
+          {/* Activity Over Time */}
+          <GitActivityChart timeline={gitReport.activityTimeline} />
+
           {/* Deterministic Hotspots Table */}
           <GitHotspotsTable
             hotspots={gitReport.hotspots}
             scoringFormula={gitReport.scoringFormula}
           />
 
-          {/* Activity Over Time */}
-          <GitActivityChart timeline={gitReport.activityTimeline} />
-
           {/* Commit Timeline Feed */}
           <GitCommitTimeline commits={gitReport.recentCommits} />
         </div>
       )
-    }
-  </main>
-</RootLayout>
+    )
+  }
+</RepoWorkspaceLayout>

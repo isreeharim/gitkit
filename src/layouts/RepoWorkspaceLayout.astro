@@ -1,0 +1,76 @@
+---
+import RootLayout from './RootLayout.astro';
+import RepoWorkspaceHeader from '../components/layout/RepoWorkspaceHeader.astro';
+import type { WorkspaceSection } from '@/types/workspace';
+import type { RepositoryMetadata } from '@/types/repository';
+import type { RepoGraph } from '@/lib/graph/graph-model';
+import type { DependencyGraph } from '@/types/dependency';
+import type { RepositoryMetricsReport } from '@/types/metrics';
+import type { RepositoryHealthReport } from '@/types/health';
+import type { SecurityReport } from '@/types/security';
+
+interface Props {
+  owner: string;
+  repo: string;
+  activeSection: WorkspaceSection;
+  title?: string;
+  description?: string;
+  metadata?: RepositoryMetadata;
+  repoGraph?: RepoGraph;
+  dependencyGraph?: DependencyGraph;
+  metricsReport?: RepositoryMetricsReport;
+  healthReport?: RepositoryHealthReport;
+  securityReport?: SecurityReport;
+  counts?: {
+    pulls?: number;
+    healthScore?: number;
+    securityAlerts?: number;
+  };
+  fullWidth?: boolean;
+}
+
+const {
+  owner,
+  repo,
+  activeSection,
+  title,
+  description,
+  metadata,
+  repoGraph,
+  dependencyGraph,
+  metricsReport,
+  healthReport,
+  securityReport,
+  counts,
+  fullWidth = false,
+} = Astro.props;
+
+const defaultTitle = metadata
+  ? `${metadata.fullName} [${activeSection.toUpperCase()}] — GitKit`
+  : `${owner}/${repo} — GitKit`;
+---
+
+<RootLayout title={title || defaultTitle} description={description}>
+  <div class="flex min-h-[calc(100vh-3.5rem)] flex-col bg-[#090d16]">
+    <RepoWorkspaceHeader
+      owner={owner}
+      repo={repo}
+      activeSection={activeSection}
+      metadata={metadata}
+      repoGraph={repoGraph}
+      dependencyGraph={dependencyGraph}
+      metricsReport={metricsReport}
+      healthReport={healthReport}
+      securityReport={securityReport}
+      counts={counts}
+    />
+
+    <div
+      class={fullWidth
+        ? 'flex-1 w-full'
+        : 'mx-auto flex-1 w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8'}
+    >
+      <slot />
+    </div>
+  </div>
+</RootLayout>

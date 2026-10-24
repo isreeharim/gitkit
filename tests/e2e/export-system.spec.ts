@@ -9,7 +9,7 @@ test.describe('GitKit Export System', () => {
       await expect(page.locator('.react-flow__node').first()).toBeVisible();
 
       // Find export button in toolbar
-      const exportBtn = page.getByRole('button', { name: /Export/i });
+      const exportBtn = page.getByRole('button', { name: /Export/i }).first();
       await expect(exportBtn).toBeVisible();
       await exportBtn.click();
 

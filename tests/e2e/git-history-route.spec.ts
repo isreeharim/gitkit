@@ -12,7 +12,7 @@ test.describe('GitKit Git History & Hotspots (/{owner}/{repo}/git)', () => {
       await expect(overviewLink).toBeVisible();
 
       // Verify summary cards
-      await expect(page.getByText('Commits Analyzed')).toBeVisible();
+      await expect(page.getByText('Commits Analyzed', { exact: true })).toBeVisible();
       await expect(page.getByText('Net Growth')).toBeVisible();
       await expect(page.getByText('Active Authors')).toBeVisible();
       await expect(page.getByText('Hotspots Identified')).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('GitKit Git History & Hotspots (/{owner}/{repo}/git)', () => {
       await gitBtn.click();
 
       await expect(page).toHaveURL('/octocat/Hello-World/git');
-      await expect(page.getByText('Commits Analyzed')).toBeVisible();
+      await expect(page.getByText('Commits Analyzed', { exact: true })).toBeVisible();
     } else {
       expect([200, 403]).toContain(response?.status());
     }
