@@ -1,0 +1,108 @@
+---
+import type { RepositoryTree } from '@/types/repository';
+import { Folder, FileCode, FileText, AlertTriangle, GitCommit } from 'lucide-react';
+import { formatBytes } from '@/lib/utils';
+
+interface Props {
+  tree: RepositoryTree;
+  defaultBranch: string;
+}
+
+const { tree, defaultBranch } = Astro.props;
+---
+
+<div class="rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-6 sm:p-8">
+  <!-- Header with Summary Counts -->
+  <div
+    class="flex flex-col gap-3 border-b border-neutral-800/60 pb-5 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <div class="flex items-center gap-2">
+        <h2 class="font-mono text-base font-semibold text-white">Repository File Tree</h2>
+        <span class="rounded bg-neutral-800 px-2 py-0.5 font-mono text-[11px] text-neutral-400">
+          {defaultBranch}
+        </span>
+      </div>
+      <p class="mt-1 font-mono text-xs text-neutral-500">
+        Recursive Git tree topology ({tree.totalFiles} files, {tree.totalDirectories} directories)
+      </p>
+    </div>
+
+    <div class="flex items-center gap-4 font-mono text-xs text-neutral-400">
+      <span
+        >Total tree size: <span class="text-neutral-200">{formatBytes(tree.totalBytes)}</span></span
+      >
+    </div>
+  </div>
+
+  <!-- Truncated Notice (for massive repos with > 100k items) -->
+  {
+    tree.truncated && (
+      <div class="mt-4 flex items-center gap-2 rounded-md border border-amber-900/60 bg-amber-950/20 p-3 font-mono text-xs text-amber-400">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+        <span>
+          Tree truncated: Repository contains over 100,000 tree objects. Showing first{' '}
+          {tree.entries.length} items.
+        </span>
+      </div>
+    )
+  }
+
+  <!-- File Tree View Table -->
+  {
+    tree.entries.length === 0 ? (
+      <div class="py-12 text-center font-mono text-xs text-neutral-500">
+        No files found in this repository branch.
+      </div>
+    ) : (
+      <div class="mt-4 overflow-hidden rounded-lg border border-neutral-800/80 bg-neutral-950/60">
+        <div class="max-h-[500px] divide-y divide-neutral-900/80 overflow-y-auto font-mono text-xs">
+          {tree.entries.slice(0, 300).map((entry) => (
+            <div class="flex items-center justify-between px-3.5 py-2 transition-colors hover:bg-neutral-900/50">
+              <div class="flex min-w-0 items-center gap-2 pr-4">
+                {entry.type === 'tree' ? (
+                  <Folder className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+                ) : entry.type === 'submodule' ? (
+                  <GitCommit className="h-3.5 w-3.5 shrink-0 text-purple-400" />
+                ) : entry.path.endsWith('.ts') ||
+                  entry.path.endsWith('.tsx') ||
+                  entry.path.endsWith('.js') ||
+                  entry.path.endsWith('.jsx') ||
+                  entry.path.endsWith('.rs') ||
+                  entry.path.endsWith('.go') ||
+                  entry.path.endsWith('.py') ? (
+                  <FileCode className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                ) : (
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+                )}
+
+                <span
+                  class={`truncate ${entry.type === 'tree' ? 'font-medium text-blue-300' : 'text-neutral-300'}`}
+                >
+                  {entry.path}
+                </span>
+              </div>
+
+              <div class="flex shrink-0 items-center gap-3 text-[11px] text-neutral-500">
+                {entry.type === 'blob' && typeof entry.size === 'number' && (
+                  <span>{formatBytes(entry.size)}</span>
+                )}
+                {entry.sha && (
+                  <span class="hidden text-neutral-600 sm:inline" title={`SHA: ${entry.sha}`}>
+                    {entry.sha.slice(0, 7)}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {tree.entries.length > 300 && (
+          <div class="border-t border-neutral-800/80 bg-neutral-950 px-4 py-2 text-center font-mono text-[11px] text-neutral-500">
+            Showing 300 of {tree.entries.length} items in tree
+          </div>
+        )}
+      </div>
+    )
+  }
+</div>

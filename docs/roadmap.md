@@ -28,16 +28,19 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 2: Repository Ingestion & Metadata Engine (Upcoming)
+## Phase 2: Repository Ingestion & Metadata Engine (Completed)
 
-- [ ] Deterministic GitHub public API client (rate-limit safe, caching headers, zero client token leakage)
-- [ ] Tree & commit metadata ingestion via GitHub REST & `isomorphic-git`
-- [ ] Deterministic repository summary card (languages, stars, forks, license, commit frequency)
-- [ ] Edge caching strategy on Cloudflare Workers KV / Cache API
+- [x] Official GitHub API client abstraction using Octokit
+- [x] Strict decoupling: GitHub API -> GitKit Repository Service -> Typed Models -> UI
+- [x] Typed `RepositoryMetadata` domain model (stars, forks, watchers, license, dates, language, size)
+- [x] Recursive public repository file tree ingestion (`RepositoryTree`)
+- [x] Deterministic error classification (not found, rate limited, private/unauthorized, network, service down)
+- [x] Real repository metadata & dense file tree view rendered at `/{owner}/{repo}`
+- [x] Comprehensive mock unit tests (57 tests) and Playwright E2E tests
 
 ---
 
-## Phase 2: Static Analysis & Code Metrics Engine
+## Phase 3: Static Analysis & Code Metrics Engine (Upcoming)
 
 - [ ] Tree-sitter AST parsing integration (via WebAssembly)
 - [ ] Cyclomatic complexity and Halstead metrics calculation

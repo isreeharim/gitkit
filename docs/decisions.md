@@ -127,3 +127,28 @@ Implement a pure, deterministic parser in `src/lib/github/parse-repo-url.ts` usi
 
 - **Pros**: Zero network overhead, microsecond execution, mathematically predictable extraction, robust support for copy-pasted deep GitHub URLs.
 - **Cons**: Requires keeping the reserved GitHub root path list up to date.
+
+---
+
+## ADR 007: GitHub Client Abstraction, Model Decoupling, and Rate Limit Safety
+
+### Status
+
+Accepted
+
+### Context
+
+Public GitHub repositories must be ingested without scraping or forcing users to log in. Raw Octokit response schemas contain hundreds of internal GitHub API fields that create tight coupling between the view layer and third-party APIs. Furthermore, unauthenticated requests are strictly rate-limited (60 req/hr per IP), requiring clear error handling without leaking stack traces or credentials.
+
+### Decision
+
+1. Implement a dedicated client abstraction (`GitHubClient` / `IGitHubClient`) wrapping Octokit, keeping tokens server-side only.
+2. Maintain a strict separation of layers:
+   `GitHub API Layer` $\to$ `GitKit Repository Service` $\to$ `Typed Application Models` $\to$ `UI Components`.
+3. Normalize raw payloads into pure domain models: `RepositoryMetadata` and `RepositoryTree`.
+4. Implement deterministic error mapping with `GitHubApiError` and `RepositoryIngestionError` to handle 404s, rate limiting, and private repositories cleanly.
+
+### Consequences
+
+- **Pros**: UI is completely insulated from GitHub schema changes; 100% of the service layer can be tested with deterministic in-memory fixtures; zero credentials or stack traces ever reach the client.
+- **Cons**: Unauthenticated requests are constrained by GitHub's 60 req/hr IP rate limits until an optional server-side token is configured.

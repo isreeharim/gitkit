@@ -1,0 +1,176 @@
+---
+import type { RepositoryMetadata } from '@/types/repository';
+import Badge from '../ui/Badge.astro';
+import {
+  Star,
+  GitFork,
+  Eye,
+  CircleDot,
+  ExternalLink,
+  Calendar,
+  Code2,
+  Scale,
+  GitBranch,
+  HardDrive,
+} from 'lucide-react';
+import { formatCompactNumber, formatBytes, formatDate } from '@/lib/utils';
+
+interface Props {
+  metadata: RepositoryMetadata;
+}
+
+const { metadata } = Astro.props;
+---
+
+<div class="rounded-xl border border-neutral-800/80 bg-neutral-900/40 p-6 sm:p-8">
+  <!-- Title, Badges & GitHub Link -->
+  <div
+    class="flex flex-col gap-4 border-b border-neutral-800/60 pb-6 sm:flex-row sm:items-start sm:justify-between"
+  >
+    <div>
+      <div class="mb-2 flex flex-wrap items-center gap-2">
+        <Badge variant="outline" class="text-[11px] text-neutral-400">
+          {metadata.visibility}
+        </Badge>
+        {
+          metadata.isArchived && (
+            <Badge variant="outline" class="border-amber-900/60 bg-amber-950/40 text-amber-400">
+              Archived
+            </Badge>
+          )
+        }
+        {
+          metadata.isFork && (
+            <Badge variant="outline" class="border-neutral-800 text-neutral-400">
+              Fork
+            </Badge>
+          )
+        }
+        {
+          metadata.license && (
+            <Badge variant="outline" class="border-neutral-800 text-neutral-300">
+              <Scale className="mr-1 h-3 w-3" />
+              <span>{metadata.license.spdxId || metadata.license.name}</span>
+            </Badge>
+          )
+        }
+      </div>
+
+      <h1 class="font-mono text-2xl font-bold tracking-tight text-white sm:text-3xl">
+        <span class="text-neutral-400">{metadata.owner}</span>
+        <span class="font-normal text-neutral-600"> / </span>
+        <span>{metadata.name}</span>
+      </h1>
+    </div>
+
+    <div class="flex items-center gap-2 self-start">
+      <a
+        href={metadata.htmlUrl}
+        target="_blank"
+        rel="noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5 font-mono text-xs text-neutral-300 transition-colors hover:border-neutral-700 hover:text-white"
+      >
+        <span>GitHub</span>
+        <ExternalLink className="h-3.5 w-3.5 text-neutral-400" />
+      </a>
+    </div>
+  </div>
+
+  <!-- Description -->
+  {
+    metadata.description ? (
+      <p class="mt-4 text-sm leading-relaxed text-neutral-300 sm:text-base">
+        {metadata.description}
+      </p>
+    ) : (
+      <p class="mt-4 font-mono text-xs text-neutral-500 italic">
+        No description provided for this repository.
+      </p>
+    )
+  }
+
+  <!-- Topics -->
+  {
+    metadata.topics.length > 0 && (
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {metadata.topics.map((topic) => (
+          <span class="rounded bg-neutral-800/60 px-2 py-0.5 font-mono text-[11px] text-neutral-400">
+            #{topic}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  <!-- Key Statistics Grid -->
+  <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded-lg border border-neutral-800/70 bg-neutral-950/40 p-3.5">
+      <div class="flex items-center gap-1.5 text-xs text-neutral-400">
+        <Star className="h-3.5 w-3.5 text-amber-400" />
+        <span>Stars</span>
+      </div>
+      <div class="mt-1.5 font-mono text-lg font-semibold text-white">
+        {formatCompactNumber(metadata.stars)}
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-neutral-800/70 bg-neutral-950/40 p-3.5">
+      <div class="flex items-center gap-1.5 text-xs text-neutral-400">
+        <GitFork className="h-3.5 w-3.5 text-blue-400" />
+        <span>Forks</span>
+      </div>
+      <div class="mt-1.5 font-mono text-lg font-semibold text-white">
+        {formatCompactNumber(metadata.forks)}
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-neutral-800/70 bg-neutral-950/40 p-3.5">
+      <div class="flex items-center gap-1.5 text-xs text-neutral-400">
+        <Eye className="h-3.5 w-3.5 text-purple-400" />
+        <span>Watchers</span>
+      </div>
+      <div class="mt-1.5 font-mono text-lg font-semibold text-white">
+        {formatCompactNumber(metadata.watchers)}
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-neutral-800/70 bg-neutral-950/40 p-3.5">
+      <div class="flex items-center gap-1.5 text-xs text-neutral-400">
+        <CircleDot className="h-3.5 w-3.5 text-emerald-400" />
+        <span>Open Issues</span>
+      </div>
+      <div class="mt-1.5 font-mono text-lg font-semibold text-white">
+        {formatCompactNumber(metadata.openIssues)}
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical Attributes Bar -->
+  <div
+    class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-neutral-800/60 pt-4 font-mono text-xs text-neutral-400"
+  >
+    {
+      metadata.language && (
+        <div class="flex items-center gap-1.5">
+          <Code2 className="h-3.5 w-3.5 text-emerald-400" />
+          <span class="text-white">{metadata.language}</span>
+        </div>
+      )
+    }
+
+    <div class="flex items-center gap-1.5">
+      <GitBranch className="h-3.5 w-3.5 text-neutral-500" />
+      <span>branch: <span class="text-neutral-200">{metadata.defaultBranch}</span></span>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <HardDrive className="h-3.5 w-3.5 text-neutral-500" />
+      <span>{formatBytes(metadata.sizeKb * 1024)}</span>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+      <span>pushed: {formatDate(metadata.pushedAt)}</span>
+    </div>
+  </div>
+</div>

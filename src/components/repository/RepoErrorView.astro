@@ -1,0 +1,98 @@
+---
+import type { RepositoryIngestionError } from '@/types/repository';
+import { AlertCircle, Clock, Lock, WifiOff, ServerCrash, ArrowLeft } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
+interface Props {
+  owner: string;
+  repo: string;
+  error: RepositoryIngestionError;
+}
+
+const { owner, repo, error } = Astro.props;
+
+let errorTitle = 'Unable to Ingest Repository';
+let errorDescription = error.message;
+
+switch (error.kind) {
+  case 'invalid_repo':
+    errorTitle = 'Invalid Repository Coordinates';
+    errorDescription = error.message;
+    break;
+  case 'not_found':
+    errorTitle = 'Repository Not Found';
+    errorDescription =
+      error.message || `The repository "${owner}/${repo}" was not found on GitHub.`;
+    break;
+  case 'rate_limited':
+    errorTitle = 'GitHub API Rate Limit Exceeded';
+    errorDescription = error.rateLimitReset
+      ? `GitHub API rate limit exceeded. Unauthenticated requests are limited by GitHub. Rate limit resets at ${formatDate(error.rateLimitReset)} (${new Date(error.rateLimitReset).toLocaleTimeString()}).`
+      : 'GitHub API rate limit reached. Please wait a short while before trying again.';
+    break;
+  case 'unauthorized':
+    errorTitle = 'Private Repository Not Supported';
+    errorDescription =
+      error.message ||
+      `Repository "${owner}/${repo}" is private or access is restricted. GitKit currently only analyzes public GitHub repositories.`;
+    break;
+  case 'github_unavailable':
+    errorTitle = 'GitHub Service Disruption';
+    errorDescription =
+      'GitHub API is currently unavailable or returning server errors. Please try again in a few moments.';
+    break;
+  case 'network_error':
+    errorTitle = 'Network Connection Error';
+    errorDescription =
+      'Failed to establish a network connection to GitHub. Please verify your connection.';
+    break;
+}
+---
+
+<div class="rounded-xl border border-neutral-800/80 bg-neutral-900/30 p-8 text-center sm:p-12">
+  <div
+    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/80 text-amber-400"
+  >
+    {
+      error.kind === 'rate_limited' ? (
+        <Clock className="h-6 w-6 text-amber-400" />
+      ) : error.kind === 'unauthorized' ? (
+        <Lock className="h-6 w-6 text-neutral-400" />
+      ) : error.kind === 'network_error' ? (
+        <WifiOff className="h-6 w-6 text-red-400" />
+      ) : error.kind === 'github_unavailable' ? (
+        <ServerCrash className="h-6 w-6 text-amber-400" />
+      ) : (
+        <AlertCircle className="h-6 w-6 text-red-400" />
+      )
+    }
+  </div>
+
+  <h1 class="text-xl font-bold tracking-tight text-white sm:text-2xl">
+    {errorTitle}
+  </h1>
+
+  <p class="mx-auto mt-3 max-w-lg font-mono text-xs leading-relaxed text-neutral-400">
+    {errorDescription}
+  </p>
+
+  {
+    error.status && (
+      <div class="mt-4">
+        <span class="rounded border border-neutral-800 bg-neutral-950 px-2.5 py-1 font-mono text-[11px] text-neutral-500">
+          HTTP Status: {error.status} • Error code: {error.kind}
+        </span>
+      </div>
+    )
+  }
+
+  <div class="mt-8 flex justify-center gap-3">
+    <a
+      href="/"
+      class="inline-flex items-center gap-2 rounded-md border border-neutral-700 bg-neutral-800 px-4 py-2 font-mono text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-700"
+    >
+      <ArrowLeft className="h-3.5 w-3.5" />
+      <span>Return to Search</span>
+    </a>
+  </div>
+</div>
