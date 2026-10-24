@@ -22,6 +22,7 @@
     "@astrojs/cloudflare": "^12.2.0",
     "@astrojs/react": "^4.2.0",
     "@tailwindcss/vite": "^4.0.9",
+    "@xyflow/react": "^12.12.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "octokit": "^5.0.5",

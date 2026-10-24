@@ -118,6 +118,16 @@ export class GitHubClient implements IGitHubClient {
       this.octokit = new Octokit({
         auth: token || undefined,
         userAgent: options.userAgent || 'GitKit/0.1 (+https://gitkit.in)',
+        request: {
+          timeout: 10000,
+        },
+        retry: {
+          enabled: false,
+        },
+        throttle: {
+          onRateLimit: () => false,
+          onSecondaryRateLimit: () => false,
+        },
       });
     }
   }

@@ -152,3 +152,37 @@ Public GitHub repositories must be ingested without scraping or forcing users to
 
 - **Pros**: UI is completely insulated from GitHub schema changes; 100% of the service layer can be tested with deterministic in-memory fixtures; zero credentials or stack traces ever reach the client.
 - **Cons**: Unauthenticated requests are constrained by GitHub's 60 req/hr IP rate limits until an optional server-side token is configured.
+
+---
+
+## ADR 008: Normalized Internal Graph Engine, Decoupled React Flow Adapter, and Hierarchical Layout
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit requires an interactive visual representation of ingested repository file trees at `/{owner}/{repo}/map`. The graph engine must remain independent of any particular visual rendering library so that future deterministic analysis engines (AST call graphs, dependency cycles, Topological sort, PageRank) operate on a clean graph data structure. Furthermore, rendering entire repositories without collapsing or progressive expansion creates unreadable node clouds and severe browser DOM overhead on medium-to-large repositories.
+
+### Decision
+
+1. **Normalized Internal Graph Model (`src/lib/graph/graph-model.ts`)**:
+   Construct an independent data model (`RepoGraph`, `RepositoryGraphNode`, `DirectoryGraphNode`, `FileGraphNode`, `RepoGraphEdge`) completely decoupled from React Flow or any UI library.
+2. **Deterministic Bottom-Up Aggregation (`src/lib/graph/tree-to-graph.ts`)**:
+   Transform `RepositoryTree` entries into directed `CONTAINS` edges and bottom-up aggregated directory statistics (direct child counts, total descendant files, and recursive byte totals).
+3. **Progressive Collapsing & Ancestor Expansion (`src/lib/graph/graph-collapse.ts`)**:
+   Keep top-level folders expanded by default while collapsing depth $\ge 2$. Provide instant O(1) expanding/collapsing that traverses only visible nodes.
+4. **Deterministic Search & Multi-Criteria Filtering (`src/lib/graph/graph-filter.ts`)**:
+   Support text matching, type filtering (directories vs files), and dynamic file extension filtering. When filtering, automatically calculate ancestor directory chains to reveal matching files inside collapsed folders.
+5. **Collision-Free Hierarchical Tree Layout (`src/lib/graph/graph-layout.ts`)**:
+   Calculate left-to-right 2D coordinates ($x = \text{depth} \times (\text{width} + \text{gap})$), vertically centering parent nodes relative to their visible children with zero bounding collisions.
+6. **Decoupled Serialization Adapter (`src/lib/graph/react-flow-adapter.ts`)**:
+   Convert visible graph nodes and layout coordinates into React Flow nodes and edges (`@xyflow/react`).
+7. **Immediate Failover on Rate Limits in Octokit**:
+   Disable Octokit's retry and throttling auto-sleep hooks so rate-limited requests fail immediately and render informative UI rather than hanging connections.
+
+### Consequences
+
+- **Pros**: 100% deterministic, zero layout jitter, instant search and filtering, highly performant on large repos, completely decoupled graph engine tested via pure unit tests.
+- **Cons**: Deep directory hierarchies require horizontal panning; addressed with viewport fit controls and minimap/navigation zoom limits.

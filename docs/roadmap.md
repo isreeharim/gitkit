@@ -40,7 +40,22 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 3: Static Analysis & Code Metrics Engine (Upcoming)
+## Phase 3: Interactive Repository Map (Completed)
+
+- [x] Normalized internal graph data model (`src/lib/graph/graph-model.ts`)
+- [x] Tree-to-graph deterministic conversion with bottom-up aggregation (`src/lib/graph/tree-to-graph.ts`)
+- [x] Progressive directory collapse and expansion engine (`src/lib/graph/graph-collapse.ts`)
+- [x] Search, type filtering, and dynamic file extension filtering with ancestor expansion (`src/lib/graph/graph-filter.ts`)
+- [x] Collision-free hierarchical tree layout algorithm (`src/lib/graph/graph-layout.ts`)
+- [x] Decoupled React Flow serialization adapter (`src/lib/graph/react-flow-adapter.ts`)
+- [x] Custom dark-theme React Flow nodes and node inspector details panel (`src/components/graph/`)
+- [x] Interactive repository map canvas with controls and search toolbar (`src/components/graph/RepoMapCanvas.tsx`)
+- [x] Full-workspace route at `/{owner}/{repo}/map` linked from repository overview page
+- [x] Comprehensive unit tests (68 tests) and Playwright E2E integration test suite
+
+---
+
+## Phase 4: Static Analysis & Code Metrics Engine (Upcoming)
 
 - [ ] Tree-sitter AST parsing integration (via WebAssembly)
 - [ ] Cyclomatic complexity and Halstead metrics calculation
@@ -50,16 +65,7 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 3: Interactive Visualization Engine
-
-- [ ] File tree architecture visualizer (treemap & icicle diagrams)
-- [ ] Module dependency graph (React Flow + D3 force-directed layout)
-- [ ] Git commit activity timeline & hotspot heatmaps
-- [ ] Interactive filtering and search across graph nodes
-
----
-
-## Phase 4: Production Hardening & Custom Domain Launch
+## Phase 5: Production Hardening & Custom Domain Launch
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

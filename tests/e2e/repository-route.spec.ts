@@ -4,13 +4,13 @@ test.describe('GitKit Repository Route (/{owner}/{repo})', () => {
   test('renders repository workspace and file tree for valid repository coordinates', async ({
     page,
   }) => {
-    const response = await page.goto('/facebook/react');
+    const response = await page.goto('/octocat/Hello-World');
 
     if (response?.status() === 200) {
       // Successful ingestion (GitHub responds with canonical repo metadata)
-      await expect(page).toHaveTitle(/react.*GitKit/i);
+      await expect(page).toHaveTitle(/Hello-World.*GitKit/i);
       const heading = page.getByRole('heading', { level: 1 });
-      await expect(heading).toContainText('react');
+      await expect(heading).toContainText('Hello-World');
 
       // Verify file tree & live ingestion elements
       await expect(page.getByText('Live Ingestion Active')).toBeVisible();
@@ -22,7 +22,7 @@ test.describe('GitKit Repository Route (/{owner}/{repo})', () => {
     } else {
       // Rate limited in CI/sandbox without token
       expect([200, 403]).toContain(response?.status());
-      await expect(page.getByText(/GitHub API Rate Limit|Rate Limit/i)).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Rate Limit/i })).toBeVisible();
     }
   });
 
@@ -49,13 +49,13 @@ test.describe('GitKit Repository Route (/{owner}/{repo})', () => {
     const input = page.getByRole('textbox', { name: 'GitHub Repository URL' });
     const submitBtn = page.locator('form').getByRole('button', { name: 'Inspect' });
 
-    await input.fill('https://github.com/withastro/astro');
+    await input.fill('https://github.com/octocat/Hello-World');
     await submitBtn.click();
 
     const openWorkspaceBtn = page.getByRole('link', { name: 'Open Workspace' });
     await expect(openWorkspaceBtn).toBeVisible();
     await openWorkspaceBtn.click();
 
-    await expect(page).toHaveURL('/withastro/astro');
+    await expect(page).toHaveURL('/octocat/Hello-World');
   });
 });
