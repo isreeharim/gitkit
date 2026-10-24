@@ -147,7 +147,23 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 10: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 10: Export System (Completed)
+
+- [x] Strongly typed export domain models and targets (`src/types/export.ts`)
+- [x] Deterministic sanitized filename generator (`src/lib/export/filename.ts`)
+- [x] Standalone SVG generator with dark theme and bezier curves (`src/lib/export/svg-generator.ts`)
+- [x] Deterministic Mermaid flowchart generator for hierarchy and dependencies (`src/lib/export/mermaid-generator.ts`)
+- [x] Normalized JSON schema v1.0 payload generator (`src/lib/export/json-generator.ts`)
+- [x] Client-side 2x Retina PNG rasterizer using HTML5 Canvas (`src/lib/export/png-exporter.ts`)
+- [x] Direct browser download utility for binary blobs and UTF-8 text (`src/lib/export/browser-download.ts`)
+- [x] Interactive Export control dialog component (`src/components/export/ExportControl.tsx`)
+- [x] Integration into Repo Map toolbar, Dependency Graph toolbar, and Overview action bar
+- [x] Comprehensive unit test suite in `tests/unit/export-system.test.ts` (187 total unit tests)
+- [x] Playwright E2E test suite in `tests/e2e/export-system.spec.ts` (26 total E2E tests)
+
+---
+
+## Phase 11: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

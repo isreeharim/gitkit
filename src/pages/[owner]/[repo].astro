@@ -11,6 +11,8 @@ import { repositoryService } from '../../lib/github/service';
 import { ArrowLeft } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../types/repository';
 import type { RepositoryMetricsReport } from '../../types/metrics';
+import { ExportControl } from '../../components/export/ExportControl';
+import { buildRepositoryGraph } from '../../lib/graph/tree-to-graph';
 
 const { owner = '', repo = '' } = Astro.params;
 
@@ -35,6 +37,11 @@ if (!validation.isValid) {
     );
   }
 }
+
+const repoGraph =
+  ingestionResult && ingestionResult.success && ingestionResult.tree
+    ? buildRepositoryGraph(ingestionResult.metadata, ingestionResult.tree)
+    : undefined;
 
 const pageTitle = ingestionResult?.success
   ? `${ingestionResult.metadata.fullName} — GitKit`
@@ -101,6 +108,16 @@ const pageTitle = ingestionResult?.success
                 <span>Security</span>
                 <span>&rarr;</span>
               </a>
+
+              <ExportControl
+                client:load
+                owner={owner}
+                repo={repo}
+                defaultTarget="bundle"
+                repoGraph={repoGraph}
+                metadata={ingestionResult.metadata}
+                metricsReport={metricsReport || undefined}
+              />
             </>
           )
         }

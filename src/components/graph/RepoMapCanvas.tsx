@@ -24,6 +24,7 @@ import { computeHierarchicalLayout } from '@/lib/graph/graph-layout';
 import { serializeToReactFlow } from '@/lib/graph/react-flow-adapter';
 import { RepositoryNodeComponent, DirectoryNodeComponent, FileNodeComponent } from './CustomNodes';
 import { NodeDetailPanel } from './NodeDetailPanel';
+import { ExportControl } from '../export/ExportControl';
 
 const nodeTypes = {
   repoNode: RepositoryNodeComponent,
@@ -251,6 +252,18 @@ function InnerRepoMap({ metadata, tree }: RepoMapCanvasProps) {
             <Maximize2 className="h-3.5 w-3.5 text-neutral-300" />
             <span className="hidden sm:inline">Fit</span>
           </button>
+        </div>
+
+        {/* Export Action */}
+        <div className="flex items-center gap-1 border-l border-neutral-800/80 pl-2">
+          <ExportControl
+            owner={metadata.owner}
+            repo={metadata.name}
+            defaultTarget="repomap"
+            repoGraph={graph}
+            visibleNodeIds={new Set(visibleNodes.map((n) => n.id))}
+            metadata={metadata}
+          />
         </div>
 
         {/* Stats counter badge */}

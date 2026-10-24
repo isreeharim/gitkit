@@ -28,6 +28,8 @@ import {
   DependencyPackageNodeComponent,
 } from './DependencyCustomNodes';
 import { DependencyDetailPanel } from './DependencyDetailPanel';
+import { ExportControl } from '../export/ExportControl';
+import type { RepositoryMetadata } from '@/types/repository';
 
 const nodeTypes = {
   depFileNode: DependencyFileNodeComponent,
@@ -39,10 +41,45 @@ interface DependencyGraphCanvasProps {
   owner: string;
   repo: string;
   defaultBranch: string;
+  metadata?: RepositoryMetadata;
 }
 
-function InnerDependencyCanvas({ graph, owner, repo, defaultBranch }: DependencyGraphCanvasProps) {
+function InnerDependencyCanvas({
+  graph,
+  owner,
+  repo,
+  defaultBranch,
+  metadata,
+}: DependencyGraphCanvasProps) {
   const { fitView } = useReactFlow();
+
+  const repoMeta: RepositoryMetadata = useMemo(() => {
+    return (
+      metadata || {
+        owner,
+        name: repo,
+        fullName: `${owner}/${repo}`,
+        description: null,
+        htmlUrl: `https://github.com/${owner}/${repo}`,
+        defaultBranch,
+        visibility: 'public' as const,
+        isFork: false,
+        isArchived: false,
+        stars: 0,
+        forks: 0,
+        watchers: 0,
+        openIssues: 0,
+        sizeKb: 0,
+        license: null,
+        language: null,
+        topics: [],
+        homepage: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        pushedAt: new Date().toISOString(),
+      }
+    );
+  }, [metadata, owner, repo, defaultBranch]);
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -207,6 +244,17 @@ function InnerDependencyCanvas({ graph, owner, repo, defaultBranch }: Dependency
           <Maximize2 className="h-3.5 w-3.5 text-neutral-300" />
           <span className="hidden md:inline">Fit</span>
         </button>
+
+        {/* Export Action */}
+        <div className="flex items-center gap-1 border-l border-neutral-800/80 pl-2">
+          <ExportControl
+            owner={owner}
+            repo={repo}
+            defaultTarget="dependencies"
+            dependencyGraph={graph}
+            metadata={repoMeta}
+          />
+        </div>
 
         {/* Stats counter */}
         <div className="hidden items-center gap-2 border-l border-neutral-800/80 pl-2 font-mono text-[11px] text-neutral-400 xl:flex">

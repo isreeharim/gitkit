@@ -458,3 +458,57 @@ GitKit Phase 9 requires deterministic repository security inspection to detect e
 
 - **Pros**: 100% reproducible and verifiable; zero AI hallucination or fuzziness; source code never leaves the edge environment; zero operating cost using free OpenSSF OSV API; sensitive credentials strictly masked in UI.
 - **Cons**: Secret scanning evaluates static patterns and cannot verify whether an exposed token has already been revoked or deactivated; package vulnerability querying is dependent on valid SemVer versions in manifest files.
+
+---
+
+## ADR 015: Deterministic Multi-Format Export System, Client-Side Canvas Rasterization, and Versioned Schema v1.0
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit Phase 10 requires a deterministic export system allowing users to export repository analysis results, architectural models, and graph visualizations in SVG, PNG, Mermaid, and JSON formats without paid services, external APIs, or AI interpretation.
+
+Key constraints:
+
+1. **Zero AI / LLM**: All exports must directly reflect analyzed data structures without hallucinated summaries or AI-generated descriptions.
+2. **Local Edge & Client Execution**: Exports must be created and rasterized strictly inside the user's browser or edge worker. No image rasterization microservices, headless Puppeteer servers, or paid chart conversion APIs.
+3. **Stand-alone Structural Integrity**:
+   - SVG must be valid, well-formed XML with embedded dark theme styling and curved hierarchical paths suitable for vector editors (Figma, Illustrator, Inkscape).
+   - PNG must be rasterized using HTML5 `<canvas>` and `toBlob` at 2x Retina density with zero external network transmission.
+   - Mermaid must generate deterministic `flowchart TD` (repo hierarchy) and `flowchart LR` (dependencies, cycles, package imports) compatible with GitHub markdown and Mermaid CLI.
+   - JSON must adhere to a versioned, self-describing schema (`v1.0`).
+
+### Decision
+
+1. **Domain Types (`src/types/export.ts`)**:
+   - `ExportFormat`: `'svg' | 'png' | 'mermaid' | 'json'`.
+   - `ExportTarget`: `'repomap' | 'dependencies' | 'bundle'`.
+   - `GitKitExportPayload`: Strongly typed schema container holding `version`, `generator`, `generatedAt`, `repository`, optional `metrics`, optional `repoMap`, optional `dependencies`, optional `health`, and optional `security`.
+2. **Pure Deterministic Filename Generation (`src/lib/export/filename.ts`)**:
+   - `generateExportFilename`: Sanitizes repo coordinates and target descriptors, producing clean filenames such as `gitkit-octocat-hello-world-repomap.svg`.
+3. **Standalone SVG Vector Generator (`src/lib/export/svg-generator.ts`)**:
+   - `generateRepoMapSvg`: Traverses the repository graph hierarchy, calculates layout bounds and grid positions, and outputs standalone SVG markup with embedded dark theme CSS, directory cards, file pills, and cubic bezier connector curves.
+   - `generateDependencySvg`: Renders dependency graph topologies with clear distinction between internal module imports, external package nodes, and circular dependency cycle warnings.
+4. **Deterministic Mermaid Generator (`src/lib/export/mermaid-generator.ts`)**:
+   - `generateRepoStructureMermaid`: Generates `flowchart TD` subgraphs for directories and nodes with type-specific shapes (`[...]` for files, `[...]` with subgraphs for folders).
+   - `generateDependencyMermaid`: Generates `flowchart LR` showing internal module connections (`-->`), external package imports (`-.->`), and cycle styling (`stroke:#f43f5e`).
+5. **JSON Schema v1.0 Generator (`src/lib/export/json-generator.ts`)**:
+   - `generateExportPayload`: Compiles all analyzed data structures into a unified, versioned JSON payload.
+   - `generateExportJson`: Formats payload with clean 2-space indentation.
+6. **Zero-Server Browser-Side PNG Rasterizer (`src/lib/export/png-exporter.ts`)**:
+   - Converts SVG string to a Data URL / Blob URL, draws it to an in-memory HTML5 Canvas scaled at 2x Retina resolution, and converts the canvas to a PNG Blob via `canvas.toBlob()`.
+7. **Client-Side Trigger & Portal UI (`src/components/export/ExportControl.tsx`)**:
+   - Dark-themed dialog rendered through React `createPortal` to `document.body` to eliminate z-index and CSS stacking context conflicts.
+   - Real-time syntax preview for Mermaid and JSON with one-click copy to clipboard.
+   - Direct browser download trigger via `browser-download.ts`.
+   - Integrated into Repo Map canvas toolbar, Dependency Graph canvas toolbar, and Repository Overview action bar.
+
+### Consequences
+
+- **Pros**: ₹0 operating cost; zero server overhead; completely offline-capable client downloads; zero external data leaks; byte-for-byte deterministic reproducibility.
+- **Cons**: PNG generation in browser requires HTML5 Canvas and `<image>` load support (available in all modern browsers).
+
+---
