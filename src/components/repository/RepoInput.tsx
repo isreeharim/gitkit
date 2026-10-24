@@ -68,12 +68,21 @@ export function RepoInput() {
           <div>
             {validationResult.success ? (
               <div className="rounded-md border border-neutral-800/80 bg-neutral-900/40 p-3 font-mono text-xs">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
-                  <span className="font-semibold">Valid repository target:</span>
-                  <span className="text-neutral-200">
-                    {validationResult.coordinates.owner}/{validationResult.coordinates.repo}
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span className="font-semibold">Valid repository target:</span>
+                    <span className="text-neutral-200">
+                      {validationResult.data.owner}/{validationResult.data.repo}
+                    </span>
+                  </div>
+                  <a
+                    href={validationResult.data.gitkitRoute}
+                    className="inline-flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300 transition-colors hover:bg-emerald-500/30"
+                  >
+                    <span>Open Workspace</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
                 </div>
                 <p className="mt-2 border-l border-neutral-800 pl-6 text-neutral-400">
                   <strong className="text-neutral-300">Phase 0 Status:</strong> Ingestion and static

@@ -106,3 +106,24 @@ Development, staging, and preview workflows will not depend on `gitkit.in`. Prev
 
 - **Pros**: Zero initial capital outlay; application architecture remains domain-agnostic.
 - **Cons**: Custom domain configuration is deferred to post-launch hardening.
+
+---
+
+## ADR 006: Deterministic GitHub URL Parsing & Coordinate Validation
+
+### Status
+
+Accepted
+
+### Context
+
+Users supply GitHub URLs in dozens of formats (with or without protocols, `www.github.com`, `.git` extensions, SSH prefixes, trailing slashes, deep subpaths like `/issues`, `/tree/main`, `/blob/main/...`, and query strings/fragments). The engine must extract canonical `{owner}` and `{repo}` coordinates without making premature network calls and without treating subpaths as repository names.
+
+### Decision
+
+Implement a pure, deterministic parser in `src/lib/github/parse-repo-url.ts` using discriminated union result types (`ParseGitHubUrlResult`). Validate owner names against GitHub username constraints and reserved root paths (e.g. `settings`, `explore`), and validate repository names against character rules (alphanumeric, dots, hyphens, underscores).
+
+### Consequences
+
+- **Pros**: Zero network overhead, microsecond execution, mathematically predictable extraction, robust support for copy-pasted deep GitHub URLs.
+- **Cons**: Requires keeping the reserved GitHub root path list up to date.

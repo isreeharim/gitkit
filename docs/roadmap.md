@@ -17,10 +17,20 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 1: Repository Ingestion & Metadata Engine
+## Phase 1: GitHub URL Engine & Repository Routing (Completed)
+
+- [x] Robust deterministic GitHub URL parser supporting all protocols, domains, .git, and subpaths
+- [x] Strict TypeScript types (`GitHubRepositoryReference`, discriminated unions)
+- [x] Initial dynamic repository route `/{owner}/{repo}` with coordinate validation
+- [x] Polished repository loading shell (no mock data, zero AI)
+- [x] Proper 404 error state for invalid repository paths
+- [x] Comprehensive unit and E2E test suites covering all edge cases
+
+---
+
+## Phase 2: Repository Ingestion & Metadata Engine (Upcoming)
 
 - [ ] Deterministic GitHub public API client (rate-limit safe, caching headers, zero client token leakage)
-- [ ] Repository resolver & validator (`/{owner}/{repo}`)
 - [ ] Tree & commit metadata ingestion via GitHub REST & `isomorphic-git`
 - [ ] Deterministic repository summary card (languages, stars, forks, license, commit frequency)
 - [ ] Edge caching strategy on Cloudflare Workers KV / Cache API

@@ -25,7 +25,7 @@ test.describe('GitKit Homepage', () => {
     // Test invalid input
     await input.fill('invalid_repo_format');
     await submitBtn.click();
-    await expect(page.getByText(/Invalid format\. Expected "owner\/repo"/i)).toBeVisible();
+    await expect(page.getByText(/expected "owner\/repo"/i)).toBeVisible();
 
     // Test valid input
     await input.fill('https://github.com/astral-sh/uv');
