@@ -2,7 +2,7 @@
  * Primary navigation sections in the unified GitKit repository workspace.
  */
 export type WorkspaceSection =
-  'overview' | 'map' | 'dependencies' | 'git' | 'pulls' | 'health' | 'security';
+  'overview' | 'map' | 'diagram' | 'dependencies' | 'git' | 'pulls' | 'health' | 'security';
 
 /**
  * Workspace navigation tab item descriptor.

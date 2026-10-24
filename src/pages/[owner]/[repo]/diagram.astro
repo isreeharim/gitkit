@@ -1,0 +1,99 @@
+---
+import RepoWorkspaceLayout from '../../../layouts/RepoWorkspaceLayout.astro';
+import RepoErrorView from '../../../components/repository/RepoErrorView.astro';
+import { DiagramCanvas } from '../../../components/diagram/DiagramCanvas';
+import { validateRepoCoordinates } from '../../../lib/github/parse-repo-url';
+import { repositoryService } from '../../../lib/github/service';
+import { synthesizeArchitectureDiagram } from '../../../lib/analyzer/architecture-synthesizer';
+import { compileDiagramToMermaid } from '../../../lib/diagram/mermaid-compiler';
+import type { RepositoryIngestionResult } from '../../../types/repository';
+import type { DiagramGraph } from '../../../types/diagram';
+
+const { owner = '', repo = '' } = Astro.params;
+
+const validation = validateRepoCoordinates(owner, repo);
+
+let ingestionResult: RepositoryIngestionResult | null = null;
+let diagramGraph: DiagramGraph | null = null;
+let mermaidCode = '';
+
+if (!validation.isValid) {
+  Astro.response.status = 404;
+} else {
+  ingestionResult = await repositoryService.ingestRepository(owner, repo);
+  if (!ingestionResult.success) {
+    Astro.response.status = ingestionResult.error.status || 404;
+  } else {
+    try {
+      const depGraph = await repositoryService.analyzeDependencies(
+        owner,
+        repo,
+        ingestionResult.tree
+      );
+      diagramGraph = synthesizeArchitectureDiagram({
+        metadata: ingestionResult.metadata,
+        tree: ingestionResult.tree,
+        packages: depGraph?.packages || [],
+      });
+      mermaidCode = compileDiagramToMermaid(diagramGraph, {
+        owner,
+        repo,
+        defaultBranch: ingestionResult.metadata.defaultBranch,
+      });
+    } catch (err) {
+      console.error('Architecture diagram synthesis failed:', err);
+    }
+  }
+}
+
+const pageTitle = ingestionResult?.success
+  ? `Architecture Diagram: ${ingestionResult.metadata.fullName} — GitKit`
+  : validation.isValid
+    ? `Architecture Diagram: ${owner}/${repo} — GitKit`
+    : 'Repository Not Found — GitKit';
+---
+
+<RepoWorkspaceLayout
+  owner={owner}
+  repo={repo}
+  activeSection="diagram"
+  title={pageTitle}
+  metadata={ingestionResult?.success ? ingestionResult.metadata : undefined}
+  diagramGraph={diagramGraph || undefined}
+  fullWidth={true}
+>
+  <main class="relative h-[calc(100vh-104px)] w-full overflow-hidden">
+    {
+      !validation.isValid ? (
+        <div class="mx-auto max-w-4xl p-6 sm:p-12">
+          <RepoErrorView
+            owner={owner}
+            repo={repo}
+            error={{
+              status: 404,
+              code: 'invalid_coordinates',
+              message: validation.error ?? 'Invalid repository coordinates.',
+            }}
+          />
+        </div>
+      ) : ingestionResult && !ingestionResult.success ? (
+        <div class="mx-auto max-w-4xl p-6 sm:p-12">
+          <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
+        </div>
+      ) : (
+        ingestionResult &&
+        ingestionResult.success &&
+        diagramGraph && (
+          <DiagramCanvas
+            client:load
+            owner={owner}
+            repo={repo}
+            metadata={ingestionResult.metadata}
+            graph={diagramGraph}
+            mermaidCode={mermaidCode}
+          />
+        )
+      )
+    }
+  </main>
+</RepoWorkspaceLayout>

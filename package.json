@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "isomorphic-git": "^1.44.4",
     "lucide-react": "^0.475.0",
+    "mermaid": "^12.2.0",
     "octokit": "^5.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

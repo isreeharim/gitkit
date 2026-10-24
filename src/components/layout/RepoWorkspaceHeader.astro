@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Lock,
   Globe,
+  Workflow,
 } from 'lucide-react';
 import Badge from '../ui/Badge.astro';
 import { ExportControl } from '../export/ExportControl';
@@ -19,6 +20,7 @@ import { formatCompactNumber } from '@/lib/utils';
 import type { RepositoryMetadata } from '@/types/repository';
 import type { RepoGraph } from '@/lib/graph/graph-model';
 import type { DependencyGraph } from '@/types/dependency';
+import type { DiagramGraph } from '@/types/diagram';
 import type { RepositoryMetricsReport } from '@/types/metrics';
 import type { RepositoryHealthReport } from '@/types/health';
 import type { SecurityReport } from '@/types/security';
@@ -33,6 +35,7 @@ interface Props {
   metadata?: RepositoryMetadata;
   repoGraph?: RepoGraph;
   dependencyGraph?: DependencyGraph;
+  diagramGraph?: DiagramGraph;
   metricsReport?: RepositoryMetricsReport;
   healthReport?: RepositoryHealthReport;
   securityReport?: SecurityReport;
@@ -50,6 +53,7 @@ const {
   metadata,
   repoGraph,
   dependencyGraph,
+  diagramGraph: _diagramGraph,
   metricsReport,
   healthReport,
   securityReport,
@@ -71,6 +75,13 @@ const navTabs = [
     label: 'Map',
     href: `${baseUrl}/map`,
     icon: Network,
+    badge: undefined,
+  },
+  {
+    id: 'diagram' as WorkspaceSection,
+    label: 'Diagram',
+    href: `${baseUrl}/diagram`,
+    icon: Workflow,
     badge: undefined,
   },
   {

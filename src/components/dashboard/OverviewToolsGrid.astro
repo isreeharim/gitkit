@@ -7,6 +7,7 @@ import {
   HeartPulse,
   ShieldAlert,
   ArrowRight,
+  Workflow,
 } from 'lucide-react';
 
 interface Props {
@@ -18,6 +19,16 @@ const { owner, repo } = Astro.props;
 const baseUrl = `/${owner}/${repo}`;
 
 const tools = [
+  {
+    title: 'Architecture Diagram',
+    path: `${baseUrl}/diagram`,
+    desc: 'Interactive Mermaid system architecture with subsystem grouping, source code linking, pan/zoom canvas, and PNG export.',
+    icon: Workflow,
+    badge: 'Architecture',
+    color: 'emerald',
+    borderColor: 'hover:border-emerald-500/60',
+    iconColor: 'text-emerald-400',
+  },
   {
     title: 'Interactive Repo Map',
     path: `${baseUrl}/map`,
