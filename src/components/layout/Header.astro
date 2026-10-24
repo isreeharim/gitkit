@@ -20,17 +20,20 @@ import Badge from '../ui/Badge.astro';
         </span>
       </a>
       <span class="text-neutral-600">/</span>
-      <Badge variant="outline" class="px-2 py-0 text-[11px] text-neutral-400">
-        Phase 0 (Foundation)
+      <Badge
+        variant="outline"
+        class="border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-400"
+      >
+        v1.0 • Deterministic
       </Badge>
     </div>
 
-    <nav class="flex items-center gap-4 font-mono text-xs">
+    <nav aria-label="Global" class="flex items-center gap-4 font-mono text-xs">
       <a
         href="https://github.com"
         target="_blank"
         rel="noreferrer"
-        class="text-neutral-400 transition-colors hover:text-white"
+        class="rounded text-neutral-400 transition-colors hover:text-white"
       >
         docs
       </a>

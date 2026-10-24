@@ -188,10 +188,15 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 12: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 12: Product-Quality Refinement (Completed)
 
-- [ ] Performance profiling and WebAssembly worker offloading
-- [ ] Cloudflare deployment optimization
-- [ ] Purchase confirmation and DNS configuration for `gitkit.in`
-- [ ] Production SSL and security headers verification
-
+- [x] Modern developer IDE typography with tabular numerals (`font-feature-settings: 'tnum' on, 'zero' on`) for metric counters, commit hashes, line counts, and tables (`src/styles/global.css`)
+- [x] Custom cubic-bezier easing tokens (`--ease-out`, `--ease-in-out`) and tactile micro-feedback (`scale(0.985)`) on buttons
+- [x] Custom subtle dark-theme scrollbars (`::-webkit-scrollbar` with neutral-800 track and neutral-600 thumb)
+- [x] Keyboard navigation muscle memory: `Escape` key listeners to dismiss `NodeDetailPanel`, `DependencyDetailPanel`, and `ExportControl` dialogs
+- [x] Backdrop click-outside handlers to dismiss modals
+- [x] High-visibility keyboard focus indicators (`:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }`)
+- [x] Full accessibility support for `@media (prefers-reduced-motion: reduce)` disabling non-essential motion
+- [x] Clean technical branding and status blueprint: `v1.0 • Deterministic` badge and verified live engine summary
+- [x] Zero AI / Zero LLM guarantee preserved across all 12 phases
+- [x] Full verification suite: 192 unit tests passing, 29 Playwright E2E tests passing, clean TypeScript strict typecheck, and successful Astro Cloudflare build

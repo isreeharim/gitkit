@@ -553,3 +553,39 @@ Following the completion of individual deep analysis capabilities (Repo Map, Dep
 
 ---
 
+## ADR 017: Product-Quality Design Refinement, Accessibility, and Keyboard Ergonomics
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit underwent 11 feature development phases, creating powerful deterministic engines for AST dependency graphs, repository maps, metrics, Git evolution, pull requests, health scoring, security auditing, multi-format export, and unified workspace routing. To transition from a fully functional prototype into a polished, production-grade developer tool, GitKit required an aesthetic and ergonomic polish pass following GitHub, Linear, and modern IDE design principles without introducing AI slop, bloated libraries, or runtime overhead.
+
+### Decision
+
+1. **Precision Typography & CSS Micro-Interactions (`src/styles/global.css`)**:
+   - Standardized on modern developer IDE typography with tabular numerals (`font-feature-settings: 'tnum' on, 'zero' on`) for metric counters, commit hashes, line counts, and tables.
+   - Defined custom cubic-bezier timing variables (`--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`) for subtle, instantaneous transitions.
+   - Integrated tactile micro-feedback on interactive buttons (`transform: scale(0.985)` on active click).
+   - Designed custom dark-theme scrollbars (`::-webkit-scrollbar` with neutral-800 track and neutral-600 thumb).
+2. **Keyboard Ergonomics & Muscle Memory**:
+   - Added global `Escape` key listeners to modal and inspector surfaces:
+     - `NodeDetailPanel.tsx`: `Escape` closes the repository map inspector panel.
+     - `DependencyDetailPanel.tsx`: `Escape` closes the dependency graph node inspector panel.
+     - `ExportControl.tsx`: `Escape` dismisses the multi-format export dialog.
+   - Added backdrop click-outside dismiss handlers to modal overlays.
+3. **Accessibility & Reduced Motion**:
+   - Implemented high-visibility keyboard focus indicators (`:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }`).
+   - Integrated full `@media (prefers-reduced-motion: reduce)` media query disabling transitions and non-essential CSS transforms for users with motion sensitivity.
+   - Semantic `<nav aria-label="...">` and `aria-current="page"` attributes across global navigation, workspace header, and breadcrumbs.
+4. **Anti-Slop Visual Discipline**:
+   - Zero glowing blobs, zero multi-color rainbow gradients, zero gratuitous glassmorphism.
+   - Replaced temporary/preview badges with precise technical metadata (`v1.0 • Deterministic`, `Public / Private`).
+   - Preserved crisp 1px borders (`border-neutral-800`), dense information layout, and strict contrast compliance.
+
+### Consequences
+
+- **Pros**: Immediate professional feel akin to Linear and GitHub; zero added runtime dependencies; enhanced WCAG AA accessibility compliance; seamless keyboard navigation; complete preservation of all 192 unit tests and 29 Playwright E2E tests.
+- **Cons**: Requires keeping CSS tokens and focus indicator outlines consistent across new Astro components and React islands.

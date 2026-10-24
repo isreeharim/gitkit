@@ -69,6 +69,17 @@ export function ExportControl({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   // Available targets based on provided data
   const availableTargets = useMemo(() => {
     const list: Array<{ id: ExportTarget; label: string; desc: string }> = [];
@@ -248,7 +259,12 @@ export function ExportControl({
   };
 
   const modalContent = isOpen ? (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setIsOpen(false);
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs"
+    >
       <div
         className="animate-in fade-in zoom-in-95 w-full max-w-2xl rounded-xl border border-neutral-800 bg-[#0e1011] p-6 font-mono text-neutral-200 shadow-2xl duration-150"
         role="dialog"

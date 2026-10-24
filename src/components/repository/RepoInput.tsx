@@ -85,9 +85,9 @@ export function RepoInput() {
                   </a>
                 </div>
                 <p className="mt-2 border-l border-neutral-800 pl-6 text-neutral-400">
-                  <strong className="text-neutral-300">Phase 0 Status:</strong> Ingestion and static
-                  analysis pipeline scheduled for Phase 1. No mock or synthetic analysis data will
-                  be presented.
+                  <strong className="text-neutral-300">Phase 0 Status:</strong> Coordinates
+                  verified. Live tree ingestion, AST dependencies, git hotspots, health, and
+                  security active.
                 </p>
               </div>
             ) : (
