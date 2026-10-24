@@ -125,15 +125,17 @@ const navTabs = [
     <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
       <a
         href="/"
-        class="flex items-center gap-1.5 font-mono text-neutral-400 transition-colors hover:text-white"
+        class="group flex items-center gap-2 font-mono text-neutral-400 transition-colors hover:text-white"
         title="GitKit Home"
       >
-        <span
-          class="flex h-5 w-5 items-center justify-center rounded border border-emerald-500/30 bg-emerald-500/10 text-[10px] font-bold text-emerald-400"
-        >
-          gk
-        </span>
-        <span class="font-semibold text-neutral-300">GitKit</span>
+        <img
+          src="/favicon.svg"
+          alt="GitKit Logo"
+          class="h-5 w-5 rounded border border-emerald-500/30 transition-transform group-hover:scale-105"
+          width="20"
+          height="20"
+        />
+        <span class="font-semibold text-neutral-300 group-hover:text-white">GitKit</span>
       </a>
 
       <span class="font-mono text-neutral-600">/</span>
