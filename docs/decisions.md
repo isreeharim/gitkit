@@ -354,3 +354,53 @@ Understanding the downstream impact of proposed code changes in a Pull Request i
 
 - **Pros**: 100% deterministic, reproducible, grounded in actual import graphs; zero AI hallucinations; no misleading claims of "risk" or "bugs"; fully covered by unit and E2E tests.
 - **Cons**: Downstream blast radius analysis relies on analyzed dependency graph nodes; files in unparsed or unsupported languages are recorded as directly changed without AST propagation.
+
+---
+
+## ADR 013: Deterministic Repository Health Scoring Engine, Modular Rule Architecture, and Transparent Evidence Reporting
+
+### Status
+
+Accepted
+
+### Context
+
+Assessing repository health often relies on subjective ratings, proprietary ML models, or LLM-generated summaries. These are nondeterministic, prone to hallucination, opaque, and violate GitKit's strict zero AI / zero LLM policy and ₹0 budget.
+
+GitKit requires an objective, 100% reproducible, transparent repository health engine with:
+1. Seven concrete evaluation categories: Documentation, Testing, Repository Hygiene, Dependency Health, Maintainability, Activity, and Security.
+2. Modular rule architecture where each rule returns structured findings with concrete evidence (paths, sizes, dates, counts).
+3. Non-penalizing waivers: Non-applicable rules (e.g. package lockfiles on non-package script projects, or test-to-code ratios on repos under 5 files) must not penalize small repositories.
+4. Transparent UI explanation: Users must see every rule evaluated, exact points awarded, why points were awarded, and verifiable evidence.
+
+### Decision
+
+1. **Modular Rule Architecture (`src/lib/analyzer/health/`)**:
+   - `types.ts`: Defines `HealthRule` and `HealthRuleContext` (`metadata`, `tree`, optional `graph`, `metrics`, `commits`).
+   - `rules/documentation-rules.ts`: Evaluates README existence & size, open source license, description, CONTRIBUTING guide, CODE_OF_CONDUCT, and CHANGELOG.
+   - `rules/testing-rules.ts`: Evaluates test file directory presence, test runner configuration (`vitest`, `jest`, `pytest`, `cargo test`, etc.), and test-to-source ratio with small repository waivers.
+   - `rules/hygiene-rules.ts`: Evaluates `.gitignore`, CI configuration (`.github/workflows`, `.gitlab-ci.yml`, etc.), issue/PR templates, and absence of committed compiled binary blobs (`.exe`, `.so`, `.class`, etc.).
+   - `rules/dependency-rules.ts`: Evaluates lockfile presence (with non-manifest waiver), cycle-free import graph traversal, and manifest definition validity.
+   - `rules/maintainability-rules.ts`: Evaluates directory hierarchy depth (<= 6 levels), monolithic file absence (warning on files > 100 KB), and root directory cleanliness.
+   - `rules/activity-rules.ts`: Evaluates recent push/commit window (active within 30d, 90d, 180d, or dormant > 365d), historical commit volume, and contributor diversity.
+   - `rules/security-rules.ts`: Evaluates SECURITY.md policy presence, absence of committed secrets/private keys (`.env`, `id_rsa`, `*.key`, `credentials.json`), and lockfile supply chain integrity.
+2. **Deterministic Scoring Formula & Weights (`src/lib/analyzer/health/scoring-engine.ts`)**:
+   - Explicit category weights totaling 100%:
+     - Documentation: 20%
+     - Testing: 20%
+     - Hygiene: 15%
+     - Dependencies: 15%
+     - Maintainability: 10%
+     - Activity: 10%
+     - Security: 10%
+   - Formula: $\text{Overall Score} = \text{round}\left( \sum (\text{CategoryPercentage} \times \text{Weight}) \right)$
+   - Rating tiers: `exemplary` ($\ge 85$), `healthy` ($\ge 70$), `moderate` ($\ge 50$), `needs_attention` ($< 50$).
+3. **Transparent Evidence Model**:
+   - Every `HealthFinding` includes `pointsAwarded`, `maxPoints`, `kind` (`positive` | `negative` | `neutral`), `summary`, `explanation`, and `evidence` string.
+4. **Health Workspace Route (`/{owner}/{repo}/health`)**:
+   - Dedicated route displaying Methodology Banner, Composite Health Index card, 7 Category cards with percentage bars, and full detailed findings with verifiable evidence.
+
+### Consequences
+
+- **Pros**: 100% deterministic, 100% reproducible; zero AI/LLM cost or latency; completely transparent explanations with evidence; fair evaluation across both large frameworks and minimal single-file scripts.
+- **Cons**: Limited to static indicators visible in repository trees, metadata, and Git history without dynamic test execution.

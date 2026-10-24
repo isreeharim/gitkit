@@ -8,7 +8,7 @@ import PullRequestImpactView from '../../../../components/pulls/PullRequestImpac
 import PullRequestFilesList from '../../../../components/pulls/PullRequestFilesList.astro';
 import { validateRepoCoordinates } from '../../../../lib/github/parse-repo-url';
 import { repositoryService } from '../../../../lib/github/service';
-import { ArrowLeft, Network, GitFork, GitCommit } from 'lucide-react';
+import { ArrowLeft, Network, GitFork, GitCommit, HeartPulse } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../../types/repository';
 import type { PullRequestImpactReport } from '../../../../types/pull-request';
 import type { DependencyGraph } from '../../../../types/dependency';
@@ -112,6 +112,14 @@ const pageTitle = impactReport
           >
             <GitCommit className="h-3 w-3 text-rose-400" />
             <span>Git History</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/health`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <HeartPulse className="h-3 w-3 text-emerald-400" />
+            <span>Health</span>
           </a>
 
           <Badge variant="purple" class="text-[11px]">

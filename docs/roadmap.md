@@ -109,7 +109,27 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 8: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 8: Deterministic Repository Health (Completed)
+
+- [x] Typed domain models for health categories, findings, category scores, rating tiers, and methodology (`src/types/health.ts`)
+- [x] Modular rule architecture evaluating 7 distinct categories (`src/lib/analyzer/health/rules/`)
+  - [x] Documentation & Licensing (README, license, description, contributing, code of conduct, changelog)
+  - [x] Automated Testing (test directories, test runner configurations, test-to-code ratio with small repo waivers)
+  - [x] Repository Hygiene (.gitignore, CI workflows, issue/PR templates, binary artifact absence)
+  - [x] Dependency Health (lockfile presence with non-manifest waiver, cycle-free imports, manifest validity)
+  - [x] Maintainability & Structure (directory depth balance, modular file sizing, root organization)
+  - [x] Development Activity (recent push window, historical commit volume, contributor base)
+  - [x] Security Hygiene (SECURITY.md policy, credential leakage scan, lockfile integrity)
+- [x] Transparent scoring engine with explicit category weights totaling 100% and tier classification (`exemplary`, `healthy`, `moderate`, `needs_attention`)
+- [x] Repository Health workspace route at `/{owner}/{repo}/health`
+- [x] UI components: `HealthScoreCard.astro`, `CategoryScoreCard.astro`, `CategoryDetailsSection.astro`, `HealthMethodologyBanner.astro`
+- [x] Cross-navigation links across all workspaces (Overview, Map, Dependencies, Git, Pulls, Health)
+- [x] Comprehensive unit test suite with 10 test fixtures in `tests/unit/repository-health.test.ts` (151 total unit tests)
+- [x] Playwright E2E test suite in `tests/e2e/repository-health-route.spec.ts`
+
+---
+
+## Phase 9: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

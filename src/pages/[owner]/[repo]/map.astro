@@ -12,6 +12,7 @@ import {
   Network,
   GitCommit as GitCommitIcon,
   GitPullRequest,
+  HeartPulse,
 } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 
@@ -97,6 +98,14 @@ const pageTitle = ingestionResult?.success
           >
             <GitPullRequest className="h-3 w-3 text-purple-400" />
             <span>Pull Requests</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/health`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <HeartPulse className="h-3 w-3 text-emerald-400" />
+            <span>Health</span>
           </a>
 
           <a

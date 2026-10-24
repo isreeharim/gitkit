@@ -33,6 +33,8 @@ import type { GitHistoryAnalysisReport } from '@/types/git';
 import { GitHubGitProvider, GitService, type GitQueryOptions } from '@/lib/git';
 import type { PullRequestSummary, PullRequestImpactReport } from '@/types/pull-request';
 import { PullRequestService } from '@/lib/pulls';
+import type { RepositoryHealthReport } from '@/types/health';
+import { evaluateRepositoryHealth } from '@/lib/analyzer/health';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -426,6 +428,48 @@ export class RepositoryService {
   ): Promise<PullRequestImpactReport | null> {
     const pullService = new PullRequestService({ client: this.client });
     return pullService.analyzePullRequest(owner, repo, pullNumber, graph);
+  }
+
+  /**
+   * Deterministically evaluates the health and hygiene of a repository.
+   */
+  async evaluateRepositoryHealth(
+    owner: string,
+    repo: string,
+    options?: {
+      metadata?: RepositoryMetadata;
+      tree?: RepositoryTree;
+      graph?: DependencyGraph;
+      metrics?: RepositoryMetricsReport;
+    }
+  ): Promise<RepositoryHealthReport> {
+    let metadata = options?.metadata;
+    let tree = options?.tree;
+
+    if (!metadata || !tree) {
+      const ingestion = await this.ingestRepository(owner, repo);
+      if (!ingestion.success) {
+        throw new Error(ingestion.error.message);
+      }
+      metadata = ingestion.metadata;
+      tree = ingestion.tree;
+    }
+
+    let commits = undefined;
+    try {
+      const gitProvider = new GitHubGitProvider(this.client);
+      commits = await gitProvider.getCommits(owner, repo, { maxCommits: 100 });
+    } catch {
+      // In case commit listing fails or is rate-limited, proceed with metadata.pushedAt
+    }
+
+    return evaluateRepositoryHealth({
+      metadata,
+      tree,
+      graph: options?.graph,
+      metrics: options?.metrics,
+      commits,
+    });
   }
 }
 

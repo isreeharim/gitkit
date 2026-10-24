@@ -1,0 +1,106 @@
+---
+import type { CategoryHealthScore } from '@/types/health';
+import { HEALTH_CATEGORY_WEIGHTS } from '@/lib/analyzer/health';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  FileText,
+  FlaskConical,
+  Sparkles,
+  GitFork,
+  Boxes,
+  Activity,
+  ShieldCheck,
+} from 'lucide-react';
+
+interface Props {
+  categoryScore: CategoryHealthScore;
+}
+
+const { categoryScore } = Astro.props;
+const weightPercent = Math.round((HEALTH_CATEGORY_WEIGHTS[categoryScore.category] ?? 0) * 100);
+
+type CategoryIconComponent = typeof Activity;
+
+// Icon mapping per category
+const categoryIcons: Record<string, CategoryIconComponent> = {
+  documentation: FileText,
+  testing: FlaskConical,
+  hygiene: Sparkles,
+  dependencies: GitFork,
+  maintainability: Boxes,
+  activity: Activity,
+  security: ShieldCheck,
+};
+
+const IconComponent = categoryIcons[categoryScore.category] || Activity;
+
+function getScoreColor(pct: number): string {
+  if (pct >= 85) return 'text-emerald-400 bg-emerald-500';
+  if (pct >= 70) return 'text-green-400 bg-green-500';
+  if (pct >= 50) return 'text-amber-400 bg-amber-500';
+  return 'text-rose-400 bg-rose-500';
+}
+
+const colorClass = getScoreColor(categoryScore.percentage);
+const textColor = colorClass.split(' ')[0];
+const barColor = colorClass.split(' ')[1];
+---
+
+<div
+  class="rounded-lg border border-neutral-800 bg-[#0e1011] p-4 font-mono transition-colors hover:border-neutral-700"
+>
+  <div class="flex items-start justify-between gap-3">
+    <div class="flex items-center gap-2.5">
+      <div class="rounded-md border border-neutral-800 bg-neutral-900/80 p-2 text-neutral-300">
+        <IconComponent className="h-4 w-4" />
+      </div>
+      <div>
+        <h3 class="text-sm font-bold tracking-tight text-white">
+          {categoryScore.label}
+        </h3>
+        <span class="text-[11px] text-neutral-500">
+          Weight: {weightPercent}% of composite
+        </span>
+      </div>
+    </div>
+
+    <div class="text-right">
+      <div class={`text-lg font-extrabold ${textColor}`}>
+        {categoryScore.percentage}%
+      </div>
+      <div class="text-[10px] text-neutral-500">
+        {categoryScore.score}/{categoryScore.maxScore} pts
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="mt-3.5 space-y-1.5">
+    <div class="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+      <div
+        class={`h-full transition-all duration-300 ${barColor}`}
+        style={`width: ${Math.max(2, Math.min(100, categoryScore.percentage))}%`}
+      >
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between pt-1 text-[11px] text-neutral-400">
+      <span class="flex items-center gap-1">
+        <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+        {categoryScore.positiveFindings.length} passed
+      </span>
+      {
+        categoryScore.negativeFindings.length > 0 ? (
+          <span class="flex items-center gap-1 text-amber-400">
+            <AlertTriangle className="h-3 w-3" />
+            {categoryScore.negativeFindings.length} warning
+            {categoryScore.negativeFindings.length > 1 ? 's' : ''}
+          </span>
+        ) : (
+          <span class="text-neutral-500">0 warnings</span>
+        )
+      }
+    </div>
+  </div>
+</div>
