@@ -1,0 +1,42 @@
+---
+import Badge from '../ui/Badge.astro';
+import type { PullRequestState } from '@/types/pull-request';
+import { GitPullRequest, GitMerge, XCircle } from 'lucide-react';
+
+interface Props {
+  state: PullRequestState;
+  isDraft?: boolean;
+  class?: string;
+}
+
+const { state, isDraft = false, class: className = '' } = Astro.props;
+---
+
+<div class={`inline-flex items-center gap-1.5 ${className}`}>
+  {
+    state === 'merged' ? (
+      <Badge variant="purple" class="gap-1">
+        <GitMerge className="h-3 w-3" />
+        <span>Merged</span>
+      </Badge>
+    ) : state === 'closed' ? (
+      <Badge variant="danger" class="gap-1">
+        <XCircle className="h-3 w-3" />
+        <span>Closed</span>
+      </Badge>
+    ) : (
+      <Badge variant="success" class="gap-1">
+        <GitPullRequest className="h-3 w-3" />
+        <span>Open</span>
+      </Badge>
+    )
+  }
+
+  {
+    isDraft && (
+      <Badge variant="muted" class="text-[10px]">
+        Draft
+      </Badge>
+    )
+  }
+</div>

@@ -1,0 +1,73 @@
+---
+import Card from '../ui/Card.astro';
+import type { PullRequestImpactReport } from '@/types/pull-request';
+import { FileCode, Code2, FolderGit2, Network } from 'lucide-react';
+
+interface Props {
+  report: PullRequestImpactReport;
+}
+
+const { report } = Astro.props;
+---
+
+<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+  <Card class="space-y-1">
+    <div class="flex items-center gap-1.5 font-mono text-xs text-neutral-400">
+      <FileCode className="h-3.5 w-3.5 text-neutral-500" />
+      <span>Files Changed</span>
+    </div>
+    <div class="font-mono text-xl font-bold text-white">
+      {report.totalFilesChanged}
+    </div>
+    <div class="truncate font-mono text-[11px] text-neutral-500">
+      Across {report.affectedDirectories.length}
+      {report.affectedDirectories.length === 1 ? 'directory' : 'directories'}
+    </div>
+  </Card>
+
+  <Card class="space-y-1">
+    <div class="flex items-center gap-1.5 font-mono text-xs text-neutral-400">
+      <Code2 className="h-3.5 w-3.5 text-emerald-500" />
+      <span>Net Growth</span>
+    </div>
+    <div class="font-mono text-xl font-bold text-emerald-400">
+      {
+        report.netGrowth >= 0
+          ? `+${report.netGrowth.toLocaleString()}`
+          : report.netGrowth.toLocaleString()
+      }
+    </div>
+    <div class="font-mono text-[11px] text-neutral-400">
+      <span class="text-emerald-400">+{report.totalAdditions.toLocaleString()}</span> / <span
+        class="text-rose-400">-{report.totalDeletions.toLocaleString()}</span
+      >
+    </div>
+  </Card>
+
+  <Card class="space-y-1">
+    <div class="flex items-center gap-1.5 font-mono text-xs text-neutral-400">
+      <FolderGit2 className="h-3.5 w-3.5 text-cyan-400" />
+      <span>Top Concentration</span>
+    </div>
+    <div class="font-mono text-xl font-bold text-cyan-400">
+      {report.changeConcentration.topDirectoryPercentage}%
+    </div>
+    <div
+      class="truncate font-mono text-[11px] text-neutral-500"
+      title={report.changeConcentration.topDirectory}
+    >
+      in {report.changeConcentration.topDirectory}
+    </div>
+  </Card>
+
+  <Card class="space-y-1">
+    <div class="flex items-center gap-1.5 font-mono text-xs text-neutral-400">
+      <Network className="h-3.5 w-3.5 text-purple-400" />
+      <span>Blast Radius</span>
+    </div>
+    <div class="font-mono text-xl font-bold text-purple-400">
+      {report.totalAffectedModulesCount}
+    </div>
+    <div class="font-mono text-[11px] text-neutral-500">Potentially affected modules</div>
+  </Card>
+</div>

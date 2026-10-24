@@ -1,0 +1,185 @@
+---
+import RootLayout from '../../../../layouts/RootLayout.astro';
+import Badge from '../../../../components/ui/Badge.astro';
+import RepoErrorView from '../../../../components/repository/RepoErrorView.astro';
+import PullRequestHeader from '../../../../components/pulls/PullRequestHeader.astro';
+import PullRequestImpactSummary from '../../../../components/pulls/PullRequestImpactSummary.astro';
+import PullRequestImpactView from '../../../../components/pulls/PullRequestImpactView.astro';
+import PullRequestFilesList from '../../../../components/pulls/PullRequestFilesList.astro';
+import { validateRepoCoordinates } from '../../../../lib/github/parse-repo-url';
+import { repositoryService } from '../../../../lib/github/service';
+import { ArrowLeft, Network, GitFork, GitCommit } from 'lucide-react';
+import type { RepositoryIngestionResult } from '../../../../types/repository';
+import type { PullRequestImpactReport } from '../../../../types/pull-request';
+import type { DependencyGraph } from '../../../../types/dependency';
+
+const { owner = '', repo = '', number = '' } = Astro.params;
+
+const validation = validateRepoCoordinates(owner, repo);
+const prNumber = parseInt(number, 10);
+const isPrNumberValid = !isNaN(prNumber) && prNumber > 0;
+
+let ingestionResult: RepositoryIngestionResult | null = null;
+let impactReport: PullRequestImpactReport | null = null;
+let dependencyGraph: DependencyGraph | null = null;
+
+if (!validation.isValid || !isPrNumberValid) {
+  Astro.response.status = 404;
+} else {
+  ingestionResult = await repositoryService.ingestRepository(owner, repo);
+  if (!ingestionResult.success) {
+    Astro.response.status = ingestionResult.error.status || 404;
+  } else {
+    try {
+      dependencyGraph = await repositoryService.analyzeDependencies(
+        owner,
+        repo,
+        ingestionResult.tree
+      );
+    } catch {
+      // Graceful fallback: impact analysis proceeds without dependency graph
+    }
+
+    impactReport = await repositoryService.analyzePullRequest(
+      owner,
+      repo,
+      prNumber,
+      dependencyGraph || undefined
+    );
+
+    if (!impactReport) {
+      Astro.response.status = 404;
+    }
+  }
+}
+
+const pageTitle = impactReport
+  ? `PR #${prNumber}: ${impactReport.pr.title} — GitKit`
+  : validation.isValid && isPrNumberValid
+    ? `Pull Request #${prNumber} — GitKit`
+    : 'Pull Request Not Found — GitKit';
+---
+
+<RootLayout title={pageTitle}>
+  {/* Top Navigation Header */}
+  <header
+    class="flex h-14 items-center justify-between border-b border-neutral-900 bg-neutral-950 px-4 sm:px-6"
+  >
+    <div class="flex items-center gap-3">
+      <a
+        href={`/${owner}/${repo}/pulls`}
+        class="flex items-center gap-1.5 rounded-md border border-neutral-800 bg-neutral-900/80 px-2.5 py-1 font-mono text-xs text-neutral-300 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span class="hidden sm:inline">All Pull Requests</span>
+      </a>
+
+      <div class="flex items-center gap-2 font-mono text-xs text-neutral-400">
+        <a href="/" class="transition-colors hover:text-white">GitKit</a>
+        <span class="text-neutral-700">/</span>
+        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{owner}</a>
+        <span class="text-neutral-700">/</span>
+        <a href={`/${owner}/${repo}`} class="text-neutral-300 hover:text-white">{repo}</a>
+        <span class="text-neutral-700">/</span>
+        <a href={`/${owner}/${repo}/pulls`} class="text-neutral-400 hover:text-white">pulls</a>
+        <span class="text-neutral-700">/</span>
+        <span class="font-semibold text-purple-400">#{prNumber}</span>
+      </div>
+    </div>
+
+    {
+      ingestionResult?.success && (
+        <div class="flex items-center gap-3">
+          <a
+            href={`/${owner}/${repo}/map`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <Network className="h-3 w-3 text-emerald-400" />
+            <span>Repo Map</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/dependencies`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <GitFork className="h-3 w-3 text-cyan-400" />
+            <span>Dependencies</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/git`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <GitCommit className="h-3 w-3 text-rose-400" />
+            <span>Git History</span>
+          </a>
+
+          <Badge variant="purple" class="text-[11px]">
+            PR Impact Analyzer
+          </Badge>
+        </div>
+      )
+    }
+  </header>
+
+  {/* Main Container */}
+  <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+    {
+      (!validation.isValid || !isPrNumberValid) && (
+        <RepoErrorView
+          owner={owner}
+          repo={repo}
+          error={{
+            kind: 'invalid_repo',
+            message: !validation.isValid
+              ? (validation.error ?? 'Invalid repository coordinates.')
+              : `Invalid pull request number "${number}". Pull request numbers must be positive integers.`,
+            status: 404,
+          }}
+        />
+      )
+    }
+
+    {
+      validation.isValid && isPrNumberValid && ingestionResult && !ingestionResult.success && (
+        <RepoErrorView owner={owner} repo={repo} error={ingestionResult.error} />
+      )
+    }
+
+    {
+      validation.isValid &&
+        isPrNumberValid &&
+        ingestionResult &&
+        ingestionResult.success &&
+        !impactReport && (
+          <RepoErrorView
+            owner={owner}
+            repo={repo}
+            error={{
+              kind: 'not_found',
+              message: `Pull Request #${prNumber} was not found on repository "${owner}/${repo}".`,
+              status: 404,
+            }}
+          />
+        )
+    }
+
+    {
+      validation.isValid &&
+        isPrNumberValid &&
+        ingestionResult &&
+        ingestionResult.success &&
+        impactReport && (
+          <div class="space-y-8">
+            <PullRequestHeader pr={impactReport.pr} />
+
+            <PullRequestImpactSummary report={impactReport} />
+
+            <PullRequestImpactView report={impactReport} />
+
+            <PullRequestFilesList files={impactReport.pr.files} />
+          </div>
+        )
+    }
+  </main>
+</RootLayout>

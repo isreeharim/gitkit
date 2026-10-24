@@ -310,3 +310,47 @@ Understanding repository evolution requires analyzing commit history, file chang
 
 - **Pros**: 100% deterministic, reproducible, transparent math; zero AI hallucinations; no false claims of bug prediction; responsive dark-first UI matching GitHub/Linear aesthetic; fully covered by unit and E2E tests.
 - **Cons**: Analyzes recent commit window (e.g. 30–50 commits) in public API paths to respect GitHub rate limits; clearly communicates sampling boundaries to users.
+
+---
+
+## ADR 012: Deterministic Pull Request Analyzer, Dependency Blast Radius Traversal, and Non-Causal Impact Reporting
+
+### Status
+
+Accepted
+
+### Context
+
+Understanding the downstream impact of proposed code changes in a Pull Request is essential for technical repo inspection. Under GitKit's non-negotiable architectural rules:
+
+1. Strictly Zero AI / Zero LLMs: GitKit MUST NOT guess PR risk, predict merge bugs, or invent semantic interpretations.
+2. Transparent Non-Causal Reporting: GitKit must state facts based strictly on deterministic AST/dependency graphs and file churn (e.g. "Potentially affected modules based on deterministic dependency graph traversal. Does not imply runtime failure or bug causation").
+3. Multi-route PR Navigation: Dedicated routes at `/{owner}/{repo}/pulls` (listing public PRs) and `/{owner}/{repo}/pulls/{number}` (detailed impact inspection workspace).
+4. Edge Runtime Compatibility: All traversals and aggregations run serverless on Cloudflare Workers / Pages with zero external databases or paid services.
+
+### Decision
+
+1. **Decoupled Pull Request Architecture (`src/lib/pulls/`)**:
+   - `normalizer.ts`: Deterministically parses raw GitHub pull request and changed files payloads into `PullRequestSummary` and `PullRequestDetail` models. Accurately determines states (`open`, `merged`, `closed`) and file statuses (`added`, `modified`, `removed`, `renamed`).
+   - `impact-analyzer.ts`: Performs deterministic blast radius analysis. Computes directory-level churn and concentration percentage, largest changed files, and downstream module dependents.
+   - `pull-service.ts`: Coordinates GitHub client, normalization, and graph traversal.
+2. **Reverse Dependency Graph Traversal (Blast Radius)**:
+   - For every changed file present in the repository's dependency graph, an incoming adjacency list is traversed via Breadth-First Search (BFS) up to a bounded depth (level 3).
+   - Classifies module impacts into explicit relationship depths:
+     - Depth 0: Directly modified in the PR.
+     - Depth 1: Directly imports a modified module.
+     - Depth 2+: Transitively depends on modified modules.
+   - Uses a cycle-safe `visited` set to ensure deterministic, loop-free termination even on circular codebases.
+3. **Change Concentration & Churn**:
+   - Identifies top affected directory and calculates exact percentage of total PR changes concentrated in that directory.
+   - Aggregates file type distribution across modified extensions.
+4. **Developer-Oriented UI Components (`src/components/pulls/`)**:
+   - `PullRequestHeader.astro`: State badge, author, branch flow (`base` <- `head`), timestamps, and link to GitHub.
+   - `PullRequestImpactSummary.astro`: High-level metrics (Files Changed, Net Growth, Concentration, Blast Radius).
+   - `PullRequestImpactView.astro`: Methodology disclaimer, directory breakdown, largest changed files, and downstream affected modules table.
+   - `PullRequestFilesList.astro`: Comprehensive changed files list with status badges and expandable diff patch snippets.
+
+### Consequences
+
+- **Pros**: 100% deterministic, reproducible, grounded in actual import graphs; zero AI hallucinations; no misleading claims of "risk" or "bugs"; fully covered by unit and E2E tests.
+- **Cons**: Downstream blast radius analysis relies on analyzed dependency graph nodes; files in unparsed or unsupported languages are recorded as directly changed without AST propagation.

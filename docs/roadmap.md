@@ -94,7 +94,22 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 7: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 7: Pull Request Analyzer (Completed)
+
+- [x] Typed domain models for pull requests, changed files, impact metrics, and blast radius (`src/types/pull-request.ts`)
+- [x] GitHub client integration for public PR lists, PR detail, and changed files diffs (`src/lib/github/client.ts`)
+- [x] Deterministic PR normalizer for states (open, merged, closed, draft) and file change statuses (`src/lib/pulls/normalizer.ts`)
+- [x] Deterministic blast radius and reverse dependency graph traversal algorithm with cycle-safe BFS up to depth 3 (`src/lib/pulls/impact-analyzer.ts`)
+- [x] Directory churn concentration percentage and largest changed files identification
+- [x] Dedicated PR list route at `/{owner}/{repo}/pulls`
+- [x] Dedicated PR analysis workspace at `/{owner}/{repo}/pulls/{number}`
+- [x] UI components: `PullRequestHeader.astro`, `PullRequestBadge.astro`, `PullRequestList.astro`, `PullRequestImpactSummary.astro`, `PullRequestImpactView.astro`, `PullRequestFilesList.astro`
+- [x] Unit test suite with 11 tests in `tests/unit/pull-request-analyzer.test.ts` (141 total unit tests)
+- [x] Playwright E2E suite in `tests/e2e/pull-requests-route.spec.ts`
+
+---
+
+## Phase 8: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

@@ -94,6 +94,19 @@ export interface IGitHubClient {
   fetchContributorCount?(owner: string, repo: string): Promise<number | null>;
   fetchCommits?(owner: string, repo: string, perPage?: number): Promise<unknown[]>;
   fetchCommitDetails?(owner: string, repo: string, ref: string): Promise<unknown | null>;
+  fetchPullRequests?(
+    owner: string,
+    repo: string,
+    state?: 'open' | 'closed' | 'all',
+    perPage?: number
+  ): Promise<unknown[]>;
+  fetchPullRequest?(owner: string, repo: string, pullNumber: number): Promise<unknown | null>;
+  fetchPullRequestFiles?(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    perPage?: number
+  ): Promise<unknown[]>;
 }
 
 export interface GitHubClientOptions {
@@ -296,6 +309,70 @@ export class GitHubClient implements IGitHubClient {
       return response.data;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Fetches public pull requests for a repository.
+   */
+  async fetchPullRequests(
+    owner: string,
+    repo: string,
+    state: 'open' | 'closed' | 'all' = 'all',
+    perPage = 30
+  ): Promise<unknown[]> {
+    try {
+      const response = await this.octokit.rest.pulls.list({
+        owner,
+        repo,
+        state,
+        per_page: perPage,
+      });
+      return response.data;
+    } catch (err: unknown) {
+      throw this.transformError(err, `${owner}/${repo} pull requests`);
+    }
+  }
+
+  /**
+   * Fetches single pull request details.
+   */
+  async fetchPullRequest(owner: string, repo: string, pullNumber: number): Promise<unknown | null> {
+    try {
+      const response = await this.octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: pullNumber,
+      });
+      return response.data;
+    } catch (err: unknown) {
+      const transformed = this.transformError(err, `${owner}/${repo} PR #${pullNumber}`);
+      if (transformed.status === 404) {
+        return null;
+      }
+      throw transformed;
+    }
+  }
+
+  /**
+   * Fetches changed files for a pull request.
+   */
+  async fetchPullRequestFiles(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    perPage = 100
+  ): Promise<unknown[]> {
+    try {
+      const response = await this.octokit.rest.pulls.listFiles({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        per_page: perPage,
+      });
+      return response.data;
+    } catch (err: unknown) {
+      throw this.transformError(err, `${owner}/${repo} PR #${pullNumber} files`);
     }
   }
 

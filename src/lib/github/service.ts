@@ -31,6 +31,8 @@ import {
 import type { RepositoryMetricsReport, LocAnalysisResult, ActivityMetrics } from '@/types/metrics';
 import type { GitHistoryAnalysisReport } from '@/types/git';
 import { GitHubGitProvider, GitService, type GitQueryOptions } from '@/lib/git';
+import type { PullRequestSummary, PullRequestImpactReport } from '@/types/pull-request';
+import { PullRequestService } from '@/lib/pulls';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -399,6 +401,31 @@ export class RepositoryService {
     const gitProvider = new GitHubGitProvider(this.client);
     const gitService = new GitService({ provider: gitProvider });
     return gitService.analyzeRepositoryHistory(owner, repo, options);
+  }
+
+  /**
+   * Retrieves public pull requests for a repository.
+   */
+  async getPullRequests(
+    owner: string,
+    repo: string,
+    state: 'open' | 'closed' | 'all' = 'all'
+  ): Promise<PullRequestSummary[]> {
+    const pullService = new PullRequestService({ client: this.client });
+    return pullService.getPullRequests(owner, repo, state);
+  }
+
+  /**
+   * Deterministically analyzes pull request changes and downstream dependency impact.
+   */
+  async analyzePullRequest(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    graph?: DependencyGraph
+  ): Promise<PullRequestImpactReport | null> {
+    const pullService = new PullRequestService({ client: this.client });
+    return pullService.analyzePullRequest(owner, repo, pullNumber, graph);
   }
 }
 

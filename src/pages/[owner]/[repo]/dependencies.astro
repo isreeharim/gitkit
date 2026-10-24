@@ -12,6 +12,7 @@ import {
   GitFork,
   Network,
   GitCommit as GitCommitIcon,
+  GitPullRequest,
 } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 import type { DependencyGraph } from '../../../types/dependency';
@@ -90,6 +91,14 @@ const pageTitle = ingestionResult?.success
           >
             <GitCommitIcon className="h-3 w-3 text-rose-400" />
             <span>Git History</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/pulls`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <GitPullRequest className="h-3 w-3 text-purple-400" />
+            <span>Pull Requests</span>
           </a>
 
           <div class="hidden items-center gap-1.5 font-mono text-xs text-neutral-400 sm:flex">

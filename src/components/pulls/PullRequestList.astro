@@ -1,0 +1,119 @@
+---
+import Card from '../ui/Card.astro';
+import PullRequestBadge from './PullRequestBadge.astro';
+import type { PullRequestSummary } from '@/types/pull-request';
+import { GitPullRequest, GitBranch, User } from 'lucide-react';
+
+interface Props {
+  owner: string;
+  repo: string;
+  pulls: readonly PullRequestSummary[];
+}
+
+const { owner, repo, pulls } = Astro.props;
+
+function formatDate(isoStr: string): string {
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return isoStr;
+  }
+}
+---
+
+<Card class="space-y-4">
+  <div
+    class="flex flex-col justify-between gap-2 border-b border-neutral-800/80 pb-3 sm:flex-row sm:items-center"
+  >
+    <div class="flex items-center gap-2">
+      <GitPullRequest className="h-4 w-4 text-emerald-400" />
+      <h3 class="font-mono text-sm font-semibold tracking-wide text-neutral-200 uppercase">
+        Public Pull Requests
+      </h3>
+      <span class="rounded bg-neutral-800 px-2 py-0.5 font-mono text-xs text-neutral-400">
+        {pulls.length}
+      </span>
+    </div>
+
+    <div class="font-mono text-xs text-neutral-500">
+      Deterministic impact analysis available for each PR
+    </div>
+  </div>
+
+  {
+    pulls.length === 0 ? (
+      <div class="p-12 text-center font-mono text-xs text-neutral-500">
+        No public pull requests found for {owner}/{repo}.
+      </div>
+    ) : (
+      <div class="divide-y divide-neutral-800/60">
+        {pulls.map((pr) => (
+          <div class="group flex flex-col gap-3 rounded-lg px-2 py-3.5 transition-colors hover:bg-neutral-900/30 sm:flex-row sm:items-start sm:justify-between">
+            <div class="max-w-2xl space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <PullRequestBadge state={pr.state} isDraft={pr.isDraft} />
+                <span class="font-bold text-neutral-500">#{pr.number}</span>
+                <a
+                  href={`/${owner}/${repo}/pulls/${pr.number}`}
+                  class="line-clamp-1 font-semibold text-neutral-100 transition-colors hover:text-emerald-400"
+                >
+                  {pr.title}
+                </a>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] text-neutral-400">
+                <div class="flex items-center gap-1.5 text-neutral-300">
+                  {pr.author.avatarUrl ? (
+                    <img
+                      src={pr.author.avatarUrl}
+                      alt={pr.author.username}
+                      class="h-3.5 w-3.5 rounded-full"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <User className="h-3 w-3 text-neutral-500" />
+                  )}
+                  <span>{pr.author.username}</span>
+                </div>
+
+                <span class="text-neutral-600">•</span>
+                <span>{formatDate(pr.createdAt)}</span>
+
+                <span class="text-neutral-600">•</span>
+                <span class="inline-flex items-center gap-1 rounded bg-neutral-900 px-1.5 py-0.5 text-neutral-400">
+                  <GitBranch className="h-2.5 w-2.5 text-neutral-500" />
+                  <span class="max-w-[120px] truncate">{pr.baseBranch}</span>
+                  <span class="text-neutral-600">&larr;</span>
+                  <span class="max-w-[120px] truncate text-neutral-300">{pr.headBranch}</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="flex shrink-0 items-center justify-between gap-3 self-center pt-1 font-mono text-xs sm:justify-end sm:self-start">
+              {(pr.additions > 0 || pr.deletions > 0) && (
+                <div class="flex items-center gap-1.5 text-[11px]">
+                  <span class="text-emerald-400">+{pr.additions.toLocaleString()}</span>
+                  <span class="text-neutral-600">/</span>
+                  <span class="text-rose-400">-{pr.deletions.toLocaleString()}</span>
+                </div>
+              )}
+
+              <a
+                href={`/${owner}/${repo}/pulls/${pr.number}`}
+                class="inline-flex items-center gap-1 rounded border border-neutral-700 bg-neutral-800/80 px-2.5 py-1 font-semibold text-neutral-200 transition-colors hover:border-neutral-600 hover:bg-neutral-800 hover:text-white"
+              >
+                <span>Inspect Impact</span>
+                <span>&rarr;</span>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</Card>
