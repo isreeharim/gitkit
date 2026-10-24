@@ -1,0 +1,118 @@
+---
+import Card from '../ui/Card.astro';
+import type { ActivityPeriod } from '@/types/git';
+import { Calendar, BarChart2 } from 'lucide-react';
+
+interface Props {
+  timeline: readonly ActivityPeriod[];
+}
+
+const { timeline } = Astro.props;
+
+// Find max commit count for relative scaling
+const maxCommits = Math.max(...timeline.map((p) => p.commitCount), 1);
+const maxVolume = Math.max(...timeline.map((p) => p.additions + p.deletions), 1);
+---
+
+<Card class="space-y-4">
+  <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+    <div class="flex items-center gap-2">
+      <BarChart2 className="h-4 w-4 text-cyan-400" />
+      <h3 class="font-mono text-sm font-semibold tracking-wide text-neutral-200 uppercase">
+        Commit Velocity & Code Volume Over Time
+      </h3>
+    </div>
+    <div class="flex items-center gap-4 font-mono text-[11px] text-neutral-400">
+      <span class="flex items-center gap-1.5">
+        <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+        <span>Commits</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span>Additions</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-2 w-2 rounded-full bg-rose-400"></span>
+        <span>Deletions</span>
+      </span>
+    </div>
+  </div>
+
+  {
+    timeline.length === 0 ? (
+      <div class="p-8 text-center font-mono text-xs text-neutral-500">
+        No chronological activity buckets available.
+      </div>
+    ) : (
+      <div class="space-y-2">
+        {timeline.map((period) => {
+          const commitPct = Math.round((period.commitCount / maxCommits) * 100);
+          const addPct = Math.round((period.additions / maxVolume) * 100);
+          const delPct = Math.round((period.deletions / maxVolume) * 100);
+
+          return (
+            <div class="group rounded-lg border border-neutral-800/60 bg-neutral-900/30 p-2.5 transition-colors hover:border-neutral-700 hover:bg-neutral-900/60">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2 font-mono text-xs text-neutral-300">
+                  <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+                  <span class="font-semibold text-neutral-200">{period.label}</span>
+                  <span class="text-neutral-600">•</span>
+                  <span class="text-neutral-400">
+                    {period.uniqueAuthors.length}{' '}
+                    {period.uniqueAuthors.length === 1 ? 'author' : 'authors'}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-3 font-mono text-xs">
+                  <span class="font-bold text-cyan-400">
+                    {period.commitCount} {period.commitCount === 1 ? 'commit' : 'commits'}
+                  </span>
+                  <span class="text-neutral-700">|</span>
+                  <span class="font-medium text-emerald-400">
+                    +{period.additions.toLocaleString()}
+                  </span>
+                  <span class="font-medium text-rose-400">
+                    -{period.deletions.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Visual progress bars */}
+              <div class="mt-2 grid grid-cols-1 gap-1.5 pt-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-14 text-right font-mono text-[10px] text-neutral-500">
+                    Activity
+                  </span>
+                  <div class="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800/80">
+                    <div
+                      class="h-full rounded-full bg-cyan-400 transition-all duration-300"
+                      style={`width: ${Math.max(commitPct, 4)}%`}
+                    />
+                  </div>
+                </div>
+
+                {(period.additions > 0 || period.deletions > 0) && (
+                  <div class="flex items-center gap-2">
+                    <span class="w-14 text-right font-mono text-[10px] text-neutral-500">
+                      Volume
+                    </span>
+                    <div class="flex h-1.5 w-full overflow-hidden rounded-full bg-neutral-800/80">
+                      <div
+                        class="h-full bg-emerald-500 transition-all duration-300"
+                        style={`width: ${addPct}%`}
+                      />
+                      <div
+                        class="h-full bg-rose-500 transition-all duration-300"
+                        style={`width: ${delPct}%`}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )
+  }
+</Card>

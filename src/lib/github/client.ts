@@ -92,6 +92,8 @@ export interface IGitHubClient {
   fetchFileContent(owner: string, repo: string, path: string, ref?: string): Promise<string | null>;
   fetchCommitCount?(owner: string, repo: string): Promise<number | null>;
   fetchContributorCount?(owner: string, repo: string): Promise<number | null>;
+  fetchCommits?(owner: string, repo: string, perPage?: number): Promise<unknown[]>;
+  fetchCommitDetails?(owner: string, repo: string, ref: string): Promise<unknown | null>;
 }
 
 export interface GitHubClientOptions {
@@ -260,6 +262,38 @@ export class GitHubClient implements IGitHubClient {
         }
       }
       return Array.isArray(response.data) ? response.data.length : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Fetches paginated commit list from GitHub.
+   */
+  async fetchCommits(owner: string, repo: string, perPage = 30): Promise<unknown[]> {
+    try {
+      const response = await this.octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        per_page: perPage,
+      });
+      return response.data;
+    } catch (err: unknown) {
+      throw this.transformError(err, `${owner}/${repo} (commits)`);
+    }
+  }
+
+  /**
+   * Fetches detailed commit data including changed files from GitHub.
+   */
+  async fetchCommitDetails(owner: string, repo: string, ref: string): Promise<unknown | null> {
+    try {
+      const response = await this.octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref,
+      });
+      return response.data;
     } catch {
       return null;
     }

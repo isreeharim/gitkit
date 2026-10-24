@@ -5,7 +5,13 @@ import RepoErrorView from '../../../components/repository/RepoErrorView.astro';
 import { RepoMapCanvas } from '../../../components/graph/RepoMapCanvas';
 import { validateRepoCoordinates } from '../../../lib/github/parse-repo-url';
 import { repositoryService } from '../../../lib/github/service';
-import { ArrowLeft, GitBranch, ExternalLink, Network } from 'lucide-react';
+import {
+  ArrowLeft,
+  GitBranch,
+  ExternalLink,
+  Network,
+  GitCommit as GitCommitIcon,
+} from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 
 const { owner = '', repo = '' } = Astro.params;
@@ -74,6 +80,14 @@ const pageTitle = ingestionResult?.success
           >
             <GitBranch className="h-3 w-3 text-cyan-400" />
             <span>Dependencies</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/git`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <GitCommitIcon className="h-3 w-3 text-rose-400" />
+            <span>Git History</span>
           </a>
 
           <a

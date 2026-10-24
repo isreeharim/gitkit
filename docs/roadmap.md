@@ -81,7 +81,20 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 6: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 6: Git History Analysis and Code Hotspots (Completed)
+
+- [x] Typed domain models for commits, authors, diff statistics, hotspots, and activity periods (`src/types/git.ts`)
+- [x] Provider abstraction interface `IGitHistoryProvider` with GitHub REST API and `isomorphic-git` implementations (`src/lib/git/`)
+- [x] Deterministic code hotspot scoring formula ($\text{RawScore}_f = C_f \times \ln(L_f + 1) \times R_f$) with logarithmic volume dampening and recency decay weighting
+- [x] Chronological activity timeline builder grouping commits into ISO 8601 weekly buckets with additions/deletions and active author sets
+- [x] Dedicated Git history and code hotspots workspace route at `/{owner}/{repo}/git`
+- [x] UI components: `GitHotspotsTable.astro`, `GitActivityChart.astro`, and `GitCommitTimeline.astro`
+- [x] Cross-navigation links between Repository Overview, Repo Map, Dependencies, and Git History
+- [x] Full unit test coverage (11 tests in git suite, 130 total unit tests) and Playwright E2E tests
+
+---
+
+## Phase 7: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

@@ -1,0 +1,154 @@
+---
+import Card from '../ui/Card.astro';
+import Badge from '../ui/Badge.astro';
+import type { FileHotspot, HotspotActivityTier } from '@/types/git';
+import { Flame, FileText, Info } from 'lucide-react';
+
+interface Props {
+  hotspots: readonly FileHotspot[];
+  scoringFormula: string;
+}
+
+const { hotspots, scoringFormula } = Astro.props;
+
+function getTierVariant(tier: HotspotActivityTier): 'danger' | 'warning' | 'info' | 'muted' {
+  switch (tier) {
+    case 'critical_churn':
+      return 'danger';
+    case 'high_churn':
+      return 'warning';
+    case 'moderate_churn':
+      return 'info';
+    case 'stable':
+    default:
+      return 'muted';
+  }
+}
+
+function getTierLabel(tier: HotspotActivityTier): string {
+  switch (tier) {
+    case 'critical_churn':
+      return 'Critical Churn';
+    case 'high_churn':
+      return 'High Churn';
+    case 'moderate_churn':
+      return 'Moderate';
+    case 'stable':
+    default:
+      return 'Stable';
+  }
+}
+
+function getScoreBarColor(score: number): string {
+  if (score >= 75) return 'bg-rose-500';
+  if (score >= 50) return 'bg-amber-500';
+  if (score >= 25) return 'bg-cyan-500';
+  return 'bg-neutral-600';
+}
+---
+
+<Card class="space-y-4">
+  <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+    <div class="flex items-center gap-2">
+      <Flame className="h-4 w-4 text-rose-400" />
+      <h3 class="font-mono text-sm font-semibold tracking-wide text-neutral-200 uppercase">
+        Code Hotspots & Churn Velocity
+      </h3>
+      <span class="rounded bg-neutral-800 px-2 py-0.5 font-mono text-xs text-neutral-400">
+        Top {hotspots.length} files
+      </span>
+    </div>
+    <div class="flex items-center gap-2 font-mono text-[11px] text-neutral-500">
+      <span>Deterministic Churn Formula</span>
+    </div>
+  </div>
+
+  <!-- Formula Documentation Note -->
+  <div class="rounded-lg border border-neutral-800/80 bg-neutral-900/40 p-3">
+    <div class="flex items-start gap-2.5">
+      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-400" />
+      <p class="font-mono text-xs leading-relaxed text-neutral-400">
+        <span class="font-semibold text-neutral-300">Methodology: </span>
+        {scoringFormula}
+      </p>
+    </div>
+  </div>
+
+  {
+    hotspots.length === 0 ? (
+      <div class="p-8 text-center font-mono text-xs text-neutral-500">
+        No hotspot data available for this commit sequence.
+      </div>
+    ) : (
+      <div class="overflow-x-auto rounded-lg border border-neutral-800/80">
+        <table class="w-full border-collapse text-left font-mono text-xs">
+          <thead>
+            <tr class="border-b border-neutral-800 bg-neutral-900/60 text-neutral-400">
+              <th class="px-3 py-2.5 font-medium">Rank & File Path</th>
+              <th class="px-3 py-2.5 text-center font-medium">Score</th>
+              <th class="px-3 py-2.5 text-center font-medium">Velocity Tier</th>
+              <th class="px-3 py-2.5 text-right font-medium">Commits</th>
+              <th class="px-3 py-2.5 text-right font-medium">Lines Changed</th>
+              <th class="px-3 py-2.5 text-right font-medium">Recent (30d)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-800/60 bg-neutral-950/40">
+            {hotspots.map((item, idx) => (
+              <tr class="transition-colors hover:bg-neutral-900/40">
+                <td class="max-w-xs truncate px-3 py-2.5 sm:max-w-md">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 shrink-0 text-right font-mono text-[11px] text-neutral-500">
+                      #{idx + 1}
+                    </span>
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+                    <span class="truncate text-neutral-200 hover:text-white" title={item.path}>
+                      {item.path}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="px-3 py-2.5 text-center">
+                  <div class="inline-flex items-center gap-2">
+                    <div class="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-800">
+                      <div
+                        class={`h-full ${getScoreBarColor(item.hotspotScore)}`}
+                        style={`width: ${Math.max(item.hotspotScore, 4)}%`}
+                      />
+                    </div>
+                    <span class="w-7 text-right font-bold text-neutral-200">
+                      {item.hotspotScore}
+                    </span>
+                  </div>
+                </td>
+
+                <td class="px-3 py-2.5 text-center">
+                  <Badge variant={getTierVariant(item.tier)} class="text-[10px]">
+                    {getTierLabel(item.tier)}
+                  </Badge>
+                </td>
+
+                <td class="px-3 py-2.5 text-right font-medium text-neutral-300">
+                  {item.changeCount.toLocaleString()}
+                </td>
+
+                <td class="px-3 py-2.5 text-right">
+                  <span class="text-emerald-400">+{item.additions.toLocaleString()}</span>
+                  <span class="mx-1 text-neutral-600">/</span>
+                  <span class="text-rose-400">-{item.deletions.toLocaleString()}</span>
+                </td>
+
+                <td class="px-3 py-2.5 text-right text-neutral-400">
+                  {item.recentChangeCount > 0 ? (
+                    <span class="font-medium text-cyan-400">{item.recentChangeCount}</span>
+                  ) : (
+                    <span class="text-neutral-600">0</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+</Card>

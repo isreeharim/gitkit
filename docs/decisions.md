@@ -260,3 +260,53 @@ GitKit requires rich repository metrics across code, structure, repository metad
 
 - **Pros**: 100% deterministic, zero LLM guesswork, strict transparency on approximation boundaries, fast edge-compatible execution, and comprehensive unit tests.
 - **Cons**: LOC analysis on very large repositories is calculated from prioritized entrypoints and shallow source files to respect edge runtime timeouts and rate limits.
+
+---
+
+## ADR 011: Git History Analysis, Deterministic Code Churn Hotspots, and Provider Abstraction
+
+### Status
+
+Accepted
+
+### Context
+
+Understanding repository evolution requires analyzing commit history, file change frequency, code volume churn (additions/deletions), and temporal activity patterns. Under GitKit's non-negotiable architectural constraints:
+
+1. Zero AI/LLM inside the product: GitKit must NOT claim "risk", "bug predictability", or "AI code smells".
+2. Deterministic Hotspots Formula: Any "hotspot" or churn score must be computed with a published, explainable mathematical formula and reproducible inputs.
+3. Edge and Serverless compatibility: Git history extraction must work cleanly under Cloudflare Workers / Cloudflare Pages runtime limits and support both GitHub REST API ingestion and isomorphic-git virtual filesystem inspection.
+4. Transparency: The UI must clearly explain the scoring methodology and display the exact formula used.
+
+### Decision
+
+1. **Provider Abstraction (`src/lib/git/types.ts`)**:
+   - `IGitHistoryProvider`: Standard interface (`getCommits`, `getCommit`) decoupled from the underlying storage mechanism.
+   - `GitHubGitProvider`: Retrieves commit history and detailed file diff deltas via official GitHub REST APIs.
+   - `IsomorphicGitProvider`: Powered by `isomorphic-git` for in-memory virtual filesystems, local test fixtures, and client-side repos.
+2. **Explainable Deterministic Hotspot Formula (`src/lib/git/hotspot-analyzer.ts`)**:
+   - Computes raw score per file:
+     $$\text{RawScore}_f = C_f \times \ln(L_f + 1) \times R_f$$
+     where:
+     - $C_f$: Commit change frequency count for file $f$.
+     - $L_f$: Total line changes ($A_f + D_f$, additions plus deletions) dampened logarithmically by $\ln(L_f + 1)$ to prevent massive auto-generated files (e.g. 20,000 line bundles or lockfiles) from dominating frequently touched hand-crafted source code.
+     - $R_f$: Average recency weight calculated with a linear decay window over 90 days from the latest commit down to a baseline floor of 0.2.
+   - Normalized score:
+     $$\text{HotspotScore}_f = \text{round}\left(100 \times \frac{\text{RawScore}_f}{\max(\text{RawScore})}\right)$$
+   - Activity tier classification:
+     - `critical_churn`: Score $\ge 75$
+     - `high_churn`: $50 \le \text{Score} < 75$
+     - `moderate_churn`: $25 \le \text{Score} < 50$
+     - `stable`: $\text{Score} < 25$
+3. **Chronological Activity Timeline (`src/lib/git/timeline-builder.ts`)**:
+   - Buckets commits into ISO 8601 weeks (`YYYY-Www`) with additions, deletions, commit counts, and active contributors.
+4. **Git History & Hotspots Workspace Route (`/{owner}/{repo}/git`)**:
+   - Displays summary cards (Commits Analyzed, Net Growth, Active Authors, Hotspots Identified).
+   - Interactive Hotspots Table (`GitHotspotsTable.astro`) with score bars, tier badges, additions/deletions, recent 30d changes, and explicit methodology banner.
+   - Activity timeline chart (`GitActivityChart.astro`) showing commit velocity and line volume over time.
+   - Chronological commit feed (`GitCommitTimeline.astro`) with author avatars, diff statistics, and file change tags.
+
+### Consequences
+
+- **Pros**: 100% deterministic, reproducible, transparent math; zero AI hallucinations; no false claims of bug prediction; responsive dark-first UI matching GitHub/Linear aesthetic; fully covered by unit and E2E tests.
+- **Cons**: Analyzes recent commit window (e.g. 30–50 commits) in public API paths to respect GitHub rate limits; clearly communicates sampling boundaries to users.

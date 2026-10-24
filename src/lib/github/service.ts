@@ -29,6 +29,8 @@ import {
   isGeneratedOrVendor,
 } from '@/lib/metrics';
 import type { RepositoryMetricsReport, LocAnalysisResult, ActivityMetrics } from '@/types/metrics';
+import type { GitHistoryAnalysisReport } from '@/types/git';
+import { GitHubGitProvider, GitService, type GitQueryOptions } from '@/lib/git';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -384,6 +386,19 @@ export class RepositoryService {
       locResult,
       activity,
     });
+  }
+
+  /**
+   * Deterministically analyzes repository Git history and code hotspots.
+   */
+  async analyzeGitHistory(
+    owner: string,
+    repo: string,
+    options?: GitQueryOptions
+  ): Promise<GitHistoryAnalysisReport> {
+    const gitProvider = new GitHubGitProvider(this.client);
+    const gitService = new GitService({ provider: gitProvider });
+    return gitService.analyzeRepositoryHistory(owner, repo, options);
   }
 }
 
