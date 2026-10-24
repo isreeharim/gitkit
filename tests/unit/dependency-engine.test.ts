@@ -756,7 +756,10 @@ describe('Graph Filter and React Flow Adapter', () => {
     expect(repaired.nodes.has('file:src/util.ts')).toBe(true);
 
     // filterDependencyGraph should execute without throwing
-    const filtered = filterDependencyGraph(brokenIslandObj as any, { filterMode: 'all' });
+    const filtered = filterDependencyGraph(
+      brokenIslandObj as unknown as Parameters<typeof filterDependencyGraph>[0],
+      { filterMode: 'all' }
+    );
     expect(filtered.visibleNodes.length).toBe(2);
   });
 });

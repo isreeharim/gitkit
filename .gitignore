@@ -8,9 +8,11 @@ dist/
 .env.production
 .env.local
 *.env
+!.env.example
 
 # Testing & coverage
 coverage/
+.nyc_output/
 playwright-report/
 test-results/
 
@@ -19,8 +21,25 @@ test-results/
 
 # IDE / OS
 .DS_Store
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+*.iml
+.project
+
+# Logs & temp files
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.temp
+*.cache
+*.swp
+*.swo
+*~
