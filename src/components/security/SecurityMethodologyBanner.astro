@@ -1,0 +1,51 @@
+---
+import { ShieldAlert, CheckCircle2 } from 'lucide-react';
+
+interface Props {
+  version: string;
+  detectors: readonly string[];
+}
+
+const { version, detectors } = Astro.props;
+---
+
+<div class="rounded-lg border border-neutral-800 bg-[#0c0d0e] p-4 font-mono text-xs">
+  <div class="flex items-start gap-3">
+    <div class="mt-0.5 rounded-md border border-rose-900/60 bg-rose-950/40 p-1.5 text-rose-400">
+      <ShieldAlert className="h-4 w-4" />
+    </div>
+    <div class="flex-1 space-y-1.5">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold tracking-wider text-neutral-200 uppercase">
+          Deterministic Security Analysis
+        </span>
+        <span class="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400">
+          v{version}
+        </span>
+        <span
+          class="rounded border border-emerald-900/60 bg-emerald-950/40 px-1.5 py-0.5 text-[10px] text-emerald-400"
+        >
+          Privacy Preserved
+        </span>
+      </div>
+      <p class="leading-relaxed text-neutral-400">
+        GitKit executes 100% deterministic security scanners locally and on serverless edge runtimes
+        without sending repository source code to third-party AI APIs or external analysis services.
+        Potential secrets are detected via Gitleaks-compatible regex patterns, dependency
+        vulnerabilities via OpenSSF OSV advisories, and configuration flaws via static AST/tree
+        rules.
+      </p>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-[11px] text-neutral-500">
+        <span class="font-medium text-neutral-400">Active Detectors:</span>
+        {
+          detectors.map((d) => (
+            <span class="flex items-center gap-1 text-neutral-300">
+              <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+              {d}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>

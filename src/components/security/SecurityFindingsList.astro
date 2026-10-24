@@ -1,0 +1,155 @@
+---
+import Card from '../ui/Card.astro';
+import type { SecurityFinding, SecurityFindingSeverity } from '@/types/security';
+import { KeyRound, Bug, Settings, ExternalLink, FileCode, CheckCircle2 } from 'lucide-react';
+
+interface Props {
+  findings: readonly SecurityFinding[];
+}
+
+const { findings } = Astro.props;
+
+function getSeverityBadge(severity: SecurityFindingSeverity) {
+  switch (severity) {
+    case 'critical':
+      return {
+        bg: 'bg-rose-950/60',
+        border: 'border-rose-800/80',
+        text: 'text-rose-400',
+        label: 'CRITICAL',
+      };
+    case 'high':
+      return {
+        bg: 'bg-amber-950/60',
+        border: 'border-amber-800/80',
+        text: 'text-amber-400',
+        label: 'HIGH',
+      };
+    case 'medium':
+      return {
+        bg: 'bg-yellow-950/60',
+        border: 'border-yellow-800/80',
+        text: 'text-yellow-400',
+        label: 'MEDIUM',
+      };
+    case 'low':
+      return {
+        bg: 'bg-blue-950/60',
+        border: 'border-blue-800/80',
+        text: 'text-blue-400',
+        label: 'LOW',
+      };
+    default:
+      return {
+        bg: 'bg-neutral-800/60',
+        border: 'border-neutral-700',
+        text: 'text-neutral-400',
+        label: 'INFO',
+      };
+  }
+}
+
+function getTypeIcon(type: SecurityFinding['type']) {
+  switch (type) {
+    case 'secret':
+      return KeyRound;
+    case 'vulnerability':
+      return Bug;
+    case 'configuration':
+      return Settings;
+  }
+}
+---
+
+<div class="space-y-4">
+  {
+    findings.length === 0 ? (
+      <Card class="space-y-2 py-12 text-center font-mono">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-emerald-900/60 bg-emerald-950/30 text-emerald-400">
+          <CheckCircle2 className="h-6 w-6" />
+        </div>
+        <h3 class="text-sm font-bold text-white">No Security Findings Detected</h3>
+        <p class="mx-auto max-w-sm text-xs text-neutral-400">
+          Scanners checked for known secret patterns, package vulnerabilities, and dangerous
+          configurations without finding any matches.
+        </p>
+      </Card>
+    ) : (
+      findings.map((f) => {
+        const severityTheme = getSeverityBadge(f.severity);
+        const TypeIcon = getTypeIcon(f.type);
+
+        return (
+          <div class="space-y-3 rounded-lg border border-neutral-800 bg-[#0e1011] p-4 font-mono transition-colors hover:border-neutral-700">
+            {/* Header: Badges & File location */}
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  class={`rounded border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${severityTheme.bg} ${severityTheme.border} ${severityTheme.text}`}
+                >
+                  {severityTheme.label}
+                </span>
+
+                <span class="inline-flex items-center gap-1 rounded border border-neutral-800 bg-neutral-900/80 px-2 py-0.5 text-[10px] text-neutral-300 capitalize">
+                  <TypeIcon className="h-3 w-3" />
+                  <span>{f.type}</span>
+                </span>
+
+                <span class="rounded border border-neutral-800/80 bg-neutral-900 px-1.5 py-0.5 text-[10px] text-neutral-500">
+                  {f.detector}
+                </span>
+
+                <span class="rounded border border-neutral-800/80 bg-neutral-900 px-1.5 py-0.5 text-[10px] text-neutral-400">
+                  Confidence: {f.confidence}
+                </span>
+              </div>
+
+              <div class="flex items-center gap-1.5 text-xs text-neutral-400">
+                <FileCode className="h-3.5 w-3.5 text-neutral-500" />
+                <span class="font-semibold text-neutral-200">{f.file}</span>
+                {f.line !== undefined && <span class="text-neutral-500">:L{f.line}</span>}
+              </div>
+            </div>
+
+            {/* Message title */}
+            <h4 class="text-sm font-bold tracking-tight text-white">{f.message}</h4>
+
+            {/* Evidence (Masked) */}
+            <div class="rounded border border-neutral-800/80 bg-neutral-950/80 p-2.5 text-xs text-neutral-300">
+              <div class="pb-1 text-[10px] font-semibold tracking-wider text-neutral-500 uppercase">
+                Masked Evidence:
+              </div>
+              <code class="break-all text-rose-300 select-all">{f.evidence}</code>
+            </div>
+
+            {/* Remediation guidance */}
+            {f.remediation && (
+              <div class="text-xs leading-relaxed text-neutral-400">
+                <strong class="text-neutral-300">Remediation: </strong>
+                {f.remediation}
+              </div>
+            )}
+
+            {/* References */}
+            {f.references && f.references.length > 0 && (
+              <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+                <span class="font-medium text-neutral-500">References:</span>
+                {f.references.map((ref) => (
+                  <a
+                    href={ref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 text-cyan-400 hover:underline"
+                  >
+                    <span>{ref.replace(/^https?:\/\//, '').split('/')[0]}</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })
+    )
+  }
+</div>

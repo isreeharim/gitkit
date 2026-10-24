@@ -1,0 +1,127 @@
+---
+import Card from '../ui/Card.astro';
+import type { SecurityReportSummary } from '@/types/security';
+import { ShieldCheck, ShieldAlert, KeyRound, Bug, Settings, AlertOctagon } from 'lucide-react';
+
+interface Props {
+  summary: SecurityReportSummary;
+  dependencyScanAvailable: boolean;
+}
+
+const { summary, dependencyScanAvailable } = Astro.props;
+
+const hasIssues = summary.totalFindings > 0;
+---
+
+<Card class="space-y-6">
+  <div class="flex flex-col gap-6 font-mono md:flex-row md:items-center md:justify-between">
+    <!-- Total findings & Status -->
+    <div class="flex items-center gap-5">
+      <div
+        class={`relative flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border ${
+          hasIssues
+            ? 'border-rose-900/60 bg-rose-950/20 text-rose-400'
+            : 'border-emerald-900/60 bg-emerald-950/20 text-emerald-400'
+        }`}
+      >
+        {hasIssues ? <ShieldAlert className="h-10 w-10" /> : <ShieldCheck className="h-10 w-10" />}
+      </div>
+
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl font-bold tracking-tight text-white">
+            {summary.totalFindings}
+          </span>
+          <span class="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+            {summary.totalFindings === 1 ? 'Finding Detected' : 'Findings Detected'}
+          </span>
+        </div>
+        <p class="max-w-md text-xs text-neutral-400">
+          {
+            hasIssues
+              ? 'Security indicators identified across committed secrets, package dependencies, and configuration files.'
+              : 'Zero security findings identified by active deterministic detectors in scanned files.'
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Severity breakdown counters -->
+    <div class="flex flex-wrap items-center gap-2.5 text-xs">
+      <div
+        class="flex items-center gap-2 rounded-lg border border-rose-950 bg-rose-950/30 px-3 py-2 text-rose-400"
+      >
+        <AlertOctagon className="h-4 w-4" />
+        <div>
+          <div class="font-bold text-white">{summary.bySeverity.critical}</div>
+          <div class="text-[10px] font-semibold text-rose-400 uppercase">Critical</div>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-2 rounded-lg border border-amber-950 bg-amber-950/30 px-3 py-2 text-amber-400"
+      >
+        <AlertOctagon className="h-4 w-4" />
+        <div>
+          <div class="font-bold text-white">{summary.bySeverity.high}</div>
+          <div class="text-[10px] font-semibold text-amber-400 uppercase">High</div>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-2 rounded-lg border border-yellow-950 bg-yellow-950/30 px-3 py-2 text-yellow-400"
+      >
+        <AlertOctagon className="h-4 w-4" />
+        <div>
+          <div class="font-bold text-white">{summary.bySeverity.medium}</div>
+          <div class="text-[10px] font-semibold text-yellow-400 uppercase">Medium</div>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-2 rounded-lg border border-blue-950 bg-blue-950/30 px-3 py-2 text-blue-400"
+      >
+        <AlertOctagon className="h-4 w-4" />
+        <div>
+          <div class="font-bold text-white">{summary.bySeverity.low}</div>
+          <div class="text-[10px] font-semibold text-blue-400 uppercase">Low</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category breakdown line -->
+  <div
+    class="flex flex-wrap items-center justify-between border-t border-neutral-800/80 pt-4 font-mono text-xs text-neutral-400"
+  >
+    <div class="flex flex-wrap items-center gap-4">
+      <span class="flex items-center gap-1.5 text-neutral-300">
+        <KeyRound className="h-3.5 w-3.5 text-rose-400" />
+        <span>Secrets: <strong class="text-white">{summary.byType.secret}</strong></span>
+      </span>
+
+      <span class="flex items-center gap-1.5 text-neutral-300">
+        <Bug className="h-3.5 w-3.5 text-amber-400" />
+        <span
+          >Vulnerabilities (OSV): <strong class="text-white">{summary.byType.vulnerability}</strong
+          ></span
+        >
+      </span>
+
+      <span class="flex items-center gap-1.5 text-neutral-300">
+        <Settings className="h-3.5 w-3.5 text-blue-400" />
+        <span
+          >Configurations: <strong class="text-white">{summary.byType.configuration}</strong></span
+        >
+      </span>
+    </div>
+
+    {
+      !dependencyScanAvailable && (
+        <span class="text-[11px] text-amber-500">
+          ⚠ OpenSSF OSV scanner was unreachable; dependency advisory checks skipped.
+        </span>
+      )
+    }
+  </div>
+</Card>

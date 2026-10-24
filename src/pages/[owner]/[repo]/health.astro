@@ -17,6 +17,7 @@ import {
   GitCommit,
   GitPullRequest,
   HeartPulse,
+  ShieldAlert,
 } from 'lucide-react';
 import type { RepositoryIngestionResult } from '../../../types/repository';
 import type { RepositoryHealthReport } from '../../../types/health';
@@ -110,6 +111,14 @@ const pageTitle = ingestionResult?.success
           >
             <GitPullRequest className="h-3 w-3 text-purple-400" />
             <span>Pull Requests</span>
+          </a>
+
+          <a
+            href={`/${owner}/${repo}/security`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <ShieldAlert className="h-3 w-3 text-rose-400" />
+            <span>Security</span>
           </a>
 
           <div class="hidden items-center gap-1.5 font-mono text-xs text-neutral-400 sm:flex">

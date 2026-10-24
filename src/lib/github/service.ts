@@ -35,6 +35,8 @@ import type { PullRequestSummary, PullRequestImpactReport } from '@/types/pull-r
 import { PullRequestService } from '@/lib/pulls';
 import type { RepositoryHealthReport } from '@/types/health';
 import { evaluateRepositoryHealth } from '@/lib/analyzer/health';
+import type { SecurityReport } from '@/types/security';
+import { analyzeRepositorySecurity, type FileContentToScan } from '@/lib/security';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -469,6 +471,75 @@ export class RepositoryService {
       graph: options?.graph,
       metrics: options?.metrics,
       commits,
+    });
+  }
+
+  /**
+   * Deterministically analyzes repository security posture across secrets,
+   * OpenSSF OSV package vulnerabilities, and dangerous configuration patterns.
+   */
+  async analyzeRepositorySecurity(
+    owner: string,
+    repo: string,
+    options?: {
+      metadata?: RepositoryMetadata;
+      tree?: RepositoryTree;
+      packages?: PackageDependency[];
+    }
+  ): Promise<SecurityReport> {
+    let metadata = options?.metadata;
+    let tree = options?.tree;
+
+    if (!metadata || !tree) {
+      const ingestion = await this.ingestRepository(owner, repo);
+      if (!ingestion.success) {
+        throw new Error(ingestion.error.message);
+      }
+      metadata = ingestion.metadata;
+      tree = ingestion.tree;
+    }
+
+    const packages: PackageDependency[] = [...(options?.packages ?? [])];
+    const filesToScan: FileContentToScan[] = [];
+
+    const manifestEntries = tree.entries.filter((e) => e.type === 'blob' && isManifestFile(e.path));
+    const configEntries = tree.entries.filter(
+      (e) =>
+        e.type === 'blob' &&
+        (/dockerfile/i.test(e.name) ||
+          e.name === '.gitmodules' ||
+          e.name === 'package.json' ||
+          e.path.startsWith('.github/workflows/'))
+    );
+
+    const entriesToFetch = [...manifestEntries, ...configEntries].slice(0, 15);
+    const fetchedPaths = new Set<string>();
+
+    await Promise.all(
+      entriesToFetch.map(async (entry) => {
+        if (fetchedPaths.has(entry.path)) return;
+        fetchedPaths.add(entry.path);
+
+        try {
+          const content = await this.client.fetchBlobContent(owner, repo, entry.sha);
+          if (content) {
+            filesToScan.push({ path: entry.path, content });
+            if (isManifestFile(entry.path) && packages.length === 0) {
+              const parsed = parseManifest(entry.path, content);
+              packages.push(...parsed);
+            }
+          }
+        } catch {
+          // Graceful fallback
+        }
+      })
+    );
+
+    return analyzeRepositorySecurity({
+      metadata,
+      tree,
+      files: filesToScan,
+      packages,
     });
   }
 }

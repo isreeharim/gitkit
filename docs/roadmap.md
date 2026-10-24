@@ -129,7 +129,25 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 9: Production Hardening & Custom Domain Launch (Upcoming)
+## Phase 9: Deterministic Security Analysis (Completed)
+
+- [x] Strongly typed domain models for security finding severities, types, confidences, and reports (`src/types/security.ts`)
+- [x] Deterministic secret masking utility ensuring zero raw secret leakage in UI, logs, or evidence (`src/lib/security/masking.ts`)
+- [x] Gitleaks regex rule engine and false-positive filtering (`src/lib/security/rules/secret-rules.ts`)
+- [x] Multi-vector security scanners:
+  - [x] Secret scanner for tree files (.env, id_rsa, credentials.json) and source contents (GitHub PATs, AWS, Google, Slack, Stripe, JWT, private keys) (`src/lib/security/scanners/secret-scanner.ts`)
+  - [x] OpenSSF OSV batch API client adapter (`api.osv.dev/v1/querybatch`) querying package coordinates without sending source code externally (`src/lib/security/scanners/osv-scanner.ts`)
+  - [x] Configuration scanner detecting vulnerable `pull_request_target` workflows, mutable action tags, Dockerfile secrets, and unsafe package scripts (`src/lib/security/scanners/config-scanner.ts`)
+- [x] Security engine orchestrator deduplicating findings, ordering by severity, and calculating summary metrics (`src/lib/security/security-engine.ts`)
+- [x] Dedicated Security Audit workspace at `/{owner}/{repo}/security`
+- [x] UI components: `SecurityMethodologyBanner.astro`, `SecuritySummaryCard.astro`, `SecurityFindingsList.astro`
+- [x] Cross-navigation links across all workspaces (Overview, Map, Dependencies, Git, Pulls, Health, Security)
+- [x] Comprehensive unit test suite with 22 test fixtures in `tests/unit/security-engine.test.ts` (173 total unit tests)
+- [x] Playwright E2E test suite in `tests/e2e/security-route.spec.ts` (24 total E2E tests)
+
+---
+
+## Phase 10: Production Hardening & Custom Domain Launch (Upcoming)
 
 - [ ] Performance profiling and WebAssembly worker offloading
 - [ ] Cloudflare deployment optimization

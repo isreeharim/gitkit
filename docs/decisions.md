@@ -368,6 +368,7 @@ Accepted
 Assessing repository health often relies on subjective ratings, proprietary ML models, or LLM-generated summaries. These are nondeterministic, prone to hallucination, opaque, and violate GitKit's strict zero AI / zero LLM policy and ₹0 budget.
 
 GitKit requires an objective, 100% reproducible, transparent repository health engine with:
+
 1. Seven concrete evaluation categories: Documentation, Testing, Repository Hygiene, Dependency Health, Maintainability, Activity, and Security.
 2. Modular rule architecture where each rule returns structured findings with concrete evidence (paths, sizes, dates, counts).
 3. Non-penalizing waivers: Non-applicable rules (e.g. package lockfiles on non-package script projects, or test-to-code ratios on repos under 5 files) must not penalize small repositories.
@@ -404,3 +405,56 @@ GitKit requires an objective, 100% reproducible, transparent repository health e
 
 - **Pros**: 100% deterministic, 100% reproducible; zero AI/LLM cost or latency; completely transparent explanations with evidence; fair evaluation across both large frameworks and minimal single-file scripts.
 - **Cons**: Limited to static indicators visible in repository trees, metadata, and Git history without dynamic test execution.
+
+---
+
+## ADR 014: Deterministic Security Analysis, Gitleaks Rules, OpenSSF OSV Adapter, and Edge Privacy Preservation
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit Phase 9 requires deterministic repository security inspection to detect exposed secrets, vulnerable dependencies, and dangerous configuration patterns without using AI, machine learning, or paid security services. Under GitKit's architectural rules:
+
+1. **Zero AI / LLM**: Never use AI to guess or hallucinate security vulnerabilities or evaluate security posture.
+2. **Local Edge Privacy**: Source code must never be transmitted or uploaded to external analysis services.
+3. **Open-Source Tooling & Rules**: Integrate Gitleaks-compatible regex pattern rules and the OpenSSF OSV-Scanner database (`api.osv.dev/v1/querybatch`).
+4. **Credential Masking**: Never expose raw unmasked secrets in the UI, evidence snippets, or logs.
+5. **Cautious Language**: Never claim certainty when a pattern is suspicious (e.g. "Potential secret detected" instead of "Confirmed credential").
+
+### Decision
+
+1. **Domain Models (`src/types/security.ts`)**:
+   - `SecurityFindingSeverity`: `'critical' | 'high' | 'medium' | 'low' | 'info'`.
+   - `SecurityFindingType`: `'secret' | 'vulnerability' | 'configuration'`.
+   - `SecurityFindingConfidence`: `'high' | 'medium' | 'low'`.
+   - `SecurityFinding`: Strongly typed finding record carrying `id`, `type`, `severity`, `ruleId`, `detector`, `file`, optional `line`, `message`, `evidence`, `confidence`, `remediation`, and optional `references`.
+   - `SecurityReportSummary`: Aggregate counters by severity and type, scanned file totals, and scan timestamp.
+   - `SecurityReport`: Complete audit payload with summary, findings, and detector inventory.
+2. **Deterministic Secret Masking (`src/lib/security/masking.ts`)**:
+   - `maskSecret`: Masks sensitive tokens preserving only non-identifying structural hints (e.g. `ghp_••••••••••••2r3s` or `AKIA••••••••••••8H9I`), completely obliterating internal secret entropy.
+   - `maskEvidenceSnippet`: Safely replaces raw matched secrets with their masked variants within surrounding code snippets.
+3. **Gitleaks Pattern Rules & False Positive Filtering (`src/lib/security/rules/secret-rules.ts`)**:
+   - Compiles Gitleaks-aligned regular expressions for GitHub PATs/OAuth tokens, AWS Access Key IDs, Google Cloud API keys, Slack tokens, Stripe live secret keys, cryptographic private key headers, JWT tokens, and hardcoded credentials.
+   - `isLikelyFalsePositive`: Deterministically screens out obvious dummy tokens, documentation placeholders (`YOUR_API_KEY_HERE`, `change_me`, `dummy_password`), alphabetical sequences (`abcdef`), and sequential numbers (`0123456789`).
+4. **Multi-Vector Security Scanners (`src/lib/security/scanners/`)**:
+   - `SecretScanner`: Scans repository trees for committed sensitive files (`.env`, `id_rsa`, `service-account.json`) and performs line-by-line regex scanning over prioritized source contents with masked evidence generation. Generic patterns are filtered in test and fixture directories to minimize noise.
+   - `OSVScanner`: Free edge-compatible HTTP adapter for OpenSSF OSV batch API (`api.osv.dev/v1/querybatch`). Queries vulnerabilities strictly using `{ package: { name, ecosystem }, version }` coordinates. Resolves SemVer constraints and normalizes CVSS scores to standard severities with direct links to advisory records. Source code is never sent to the API.
+   - `ConfigScanner`: Deterministic static parser checking for:
+     - GitHub Actions `pull_request_target` workflows checking out untrusted PR head refs (`pwn-request` vectors).
+     - Unpinned third-party GitHub Actions referencing mutable `@main` or `@master` branches.
+     - Dockerfiles containing hardcoded passwords or build-time secrets.
+     - Package manifests running remote unverified scripts (`curl | sh` / `wget | bash`).
+5. **Security Engine Orchestrator (`src/lib/security/security-engine.ts`)**:
+   - Runs enabled scanners, deduplicates findings, orders findings deterministically by severity (`critical` > `high` > `medium` > `low` > `info`) and file location, and computes comprehensive summary metrics.
+6. **Dedicated Security Workspace (`/{owner}/{repo}/security`)**:
+   - Displays Methodology Banner emphasizing zero AI and local privacy preservation.
+   - High-level metric summary cards with severity badges, category counters, and clean-state indicator.
+   - Interactive findings cards with masked evidence code snippets, confidence levels, detector metadata, and concrete remediation instructions.
+
+### Consequences
+
+- **Pros**: 100% reproducible and verifiable; zero AI hallucination or fuzziness; source code never leaves the edge environment; zero operating cost using free OpenSSF OSV API; sensitive credentials strictly masked in UI.
+- **Cons**: Secret scanning evaluates static patterns and cannot verify whether an exposed token has already been revoked or deactivated; package vulnerability querying is dependent on valid SemVer versions in manifest files.
