@@ -18,7 +18,6 @@ import type { SecurityReport } from '../../types/security';
 import type { GitHistoryAnalysisReport } from '../../types/git';
 import { evaluateRepositoryHealth } from '../../lib/analyzer/health';
 import { analyzeRepositorySecurity } from '../../lib/security';
-import { buildRepositoryGraph } from '../../lib/graph/tree-to-graph';
 
 const { owner = '', repo = '' } = Astro.params;
 
@@ -43,7 +42,7 @@ if (!validation.isValid) {
       repo,
       ingestionResult.metadata,
       ingestionResult.tree,
-      15
+      8
     );
 
     // 2. Fetch lightweight recent commits for activity overview
@@ -74,11 +73,6 @@ if (!validation.isValid) {
   }
 }
 
-const repoGraph =
-  ingestionResult && ingestionResult.success && ingestionResult.tree
-    ? buildRepositoryGraph(ingestionResult.metadata, ingestionResult.tree)
-    : undefined;
-
 const pageTitle = ingestionResult?.success
   ? `${ingestionResult.metadata.fullName} — GitKit`
   : validation.isValid
@@ -92,7 +86,6 @@ const pageTitle = ingestionResult?.success
   activeSection="overview"
   title={pageTitle}
   metadata={ingestionResult?.success ? ingestionResult.metadata : undefined}
-  repoGraph={repoGraph}
   metricsReport={metricsReport || undefined}
   healthReport={healthReport || undefined}
   securityReport={securityReport || undefined}

@@ -155,6 +155,34 @@ describe('normalizeRepositoryTree', () => {
     const tree = normalizeRepositoryTree(truncatedRaw);
     expect(tree.truncated).toBe(true);
   });
+
+  it('safely caps giant trees to maxEntries while preserving total file counts', () => {
+    const bigEntries = Array.from({ length: 50 }, (_, i) => ({
+      path: `dir/file-${i}.ts`,
+      mode: '100644',
+      type: 'blob',
+      size: 100,
+      sha: `sha-${i}`,
+    }));
+
+    const bigTreeRaw: RawGitHubTree = {
+      sha: 'big-sha',
+      url: 'https://api.github.com/trees/big-sha',
+      truncated: false,
+      tree: [
+        { path: 'package.json', mode: '100644', type: 'blob', size: 200, sha: 'pkg-sha' },
+        ...bigEntries,
+      ],
+    };
+
+    // Cap at 10 items
+    const tree = normalizeRepositoryTree(bigTreeRaw, 10);
+    expect(tree.totalFiles).toBe(51);
+    expect(tree.entries.length).toBe(10);
+    expect(tree.truncated).toBe(true);
+    // Prioritizes package.json
+    expect(tree.entries.some((e) => e.path === 'package.json')).toBe(true);
+  });
 });
 
 describe('RepositoryService', () => {

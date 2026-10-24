@@ -39,9 +39,22 @@ if (!validation.isValid) {
         owner,
         repo,
         defaultBranch: ingestionResult.metadata.defaultBranch,
+        includeLinks: false,
       });
     } catch (err) {
       console.error('Architecture diagram synthesis failed:', err);
+      diagramGraph = {
+        groups: [],
+        nodes: [],
+        edges: [],
+        summary: {
+          totalComponents: 0,
+          subsystemsCount: 0,
+          relationshipsCount: 0,
+          primaryLanguage: ingestionResult.metadata.language || undefined,
+        },
+      };
+      mermaidCode = 'flowchart TD\n  empty["No architectural components detected"]';
     }
   }
 }
@@ -85,13 +98,23 @@ const pageTitle = ingestionResult?.success
         ingestionResult.success &&
         diagramGraph && (
           <DiagramCanvas
-            client:load
+            client:only="react"
             owner={owner}
             repo={repo}
             metadata={ingestionResult.metadata}
             graph={diagramGraph}
             mermaidCode={mermaidCode}
-          />
+          >
+            <div
+              slot="fallback"
+              class="flex h-full w-full items-center justify-center bg-[#0a0a0a]"
+            >
+              <div class="flex items-center gap-3 font-mono text-xs text-neutral-400">
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                <span>Initializing architecture diagram...</span>
+              </div>
+            </div>
+          </DiagramCanvas>
         )
       )
     }

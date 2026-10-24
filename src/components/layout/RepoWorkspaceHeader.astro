@@ -249,7 +249,7 @@ const navTabs = [
       {
         metadata && (
           <ExportControl
-            client:load
+            client:idle
             owner={owner}
             repo={repo}
             defaultTarget={
@@ -259,8 +259,8 @@ const navTabs = [
                   ? 'dependencies'
                   : 'bundle'
             }
-            repoGraph={repoGraph}
-            dependencyGraph={dependencyGraph}
+            repoGraph={activeSection === 'map' ? repoGraph : undefined}
+            dependencyGraph={activeSection === 'dependencies' ? dependencyGraph : undefined}
             metadata={metadata}
             metricsReport={metricsReport}
             healthReport={healthReport}

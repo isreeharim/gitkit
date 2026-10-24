@@ -23,7 +23,7 @@ test.describe('GitKit Repository Route (/{owner}/{repo})', () => {
       await expect(page.getByText('Metric Methodology & Provenance')).toBeVisible();
 
       // Verify GitHub external link
-      const githubLink = page.getByRole('link', { name: 'GitHub' });
+      const githubLink = page.getByRole('link', { name: 'GitHub', exact: true });
       await expect(githubLink).toBeVisible();
     } else {
       // Rate limited in CI/sandbox without token

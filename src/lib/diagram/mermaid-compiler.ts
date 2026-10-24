@@ -68,6 +68,7 @@ export interface CompileDiagramOptions {
   owner: string;
   repo: string;
   defaultBranch?: string;
+  includeLinks?: boolean;
 }
 
 /**
@@ -77,7 +78,7 @@ export function compileDiagramToMermaid(
   graph: DiagramGraph,
   options: CompileDiagramOptions
 ): string {
-  const { owner, repo, defaultBranch = 'main' } = options;
+  const { owner, repo, defaultBranch = 'main', includeLinks = true } = options;
   const lines: string[] = ['flowchart TD'];
 
   const groupedNodeIds = new Set<string>();
@@ -128,16 +129,18 @@ export function compileDiagramToMermaid(
   }
 
   // 4. Interactive Click Directives (Links to GitHub source)
-  const nodesWithPaths = graph.nodes.filter((n) => n.path);
-  if (nodesWithPaths.length > 0) {
-    lines.push('');
-    for (const node of nodesWithPaths) {
-      const safeNodeId = sanitizeMermaidId(node.id);
-      const encodedPath = node.path!.split('/').map(encodeURIComponent).join('/');
-      const isDirectory = !node.path!.includes('.') || node.path!.endsWith('/');
-      const pathType = isDirectory ? 'tree' : 'blob';
-      const url = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${pathType}/${encodeURIComponent(defaultBranch)}/${encodedPath}`;
-      lines.push(`  click ${safeNodeId} "${url}" "${escapeMermaidText(node.path!)}" _blank`);
+  if (includeLinks) {
+    const nodesWithPaths = graph.nodes.filter((n) => n.path);
+    if (nodesWithPaths.length > 0) {
+      lines.push('');
+      for (const node of nodesWithPaths) {
+        const safeNodeId = sanitizeMermaidId(node.id);
+        const encodedPath = node.path!.split('/').map(encodeURIComponent).join('/');
+        const isDirectory = !node.path!.includes('.') || node.path!.endsWith('/');
+        const pathType = isDirectory ? 'tree' : 'blob';
+        const url = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${pathType}/${encodeURIComponent(defaultBranch)}/${encodedPath}`;
+        lines.push(`  click ${safeNodeId} "${url}" "${escapeMermaidText(node.path!)}" _blank`);
+      }
     }
   }
 

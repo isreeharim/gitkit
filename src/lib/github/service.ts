@@ -110,29 +110,78 @@ function normalizeTreeEntry(entry: RawGitHubTreeEntry): RepositoryTreeEntry {
 }
 
 /**
+ * Maximum entries to index in a single repository tree on edge runtime to prevent OOM.
+ */
+export const MAX_SAFE_TREE_ENTRIES = 3000;
+
+/**
  * Deterministically normalizes raw GitHub Git tree payload into GitKit's RepositoryTree model.
  */
-export function normalizeRepositoryTree(raw: RawGitHubTree): RepositoryTree {
+export function normalizeRepositoryTree(
+  raw: RawGitHubTree,
+  maxEntries = MAX_SAFE_TREE_ENTRIES
+): RepositoryTree {
   const rawList = Array.isArray(raw.tree) ? raw.tree : [];
   let totalFiles = 0;
   let totalDirectories = 0;
   let totalBytes = 0;
 
+  // Track if GitHub API truncated it or if we capped it to protect edge memory
+  let isCapped = Boolean(raw.truncated);
+
+  // If rawList exceeds maxEntries, prioritize shallow directories, manifests, and root files
+  let candidateList = rawList;
+  if (rawList.length > maxEntries) {
+    isCapped = true;
+    // Calculate totals across ALL entries first so metadata metrics remain 100% accurate!
+    for (const item of rawList) {
+      if (!item.path) continue;
+      if (item.type === 'blob') {
+        totalFiles++;
+        if (typeof item.size === 'number') {
+          totalBytes += item.size;
+        }
+      } else if (item.type === 'tree') {
+        totalDirectories++;
+      }
+    }
+
+    // Prioritize: manifests and shallow paths (fewer slashes)
+    candidateList = [...rawList]
+      .sort((a, b) => {
+        const pathA = a.path || '';
+        const pathB = b.path || '';
+        const isManifestA = isManifestFile(pathA);
+        const isManifestB = isManifestFile(pathB);
+        if (isManifestA && !isManifestB) return -1;
+        if (!isManifestA && isManifestB) return 1;
+
+        const depthA = pathA.split('/').length;
+        const depthB = pathB.split('/').length;
+        if (depthA !== depthB) return depthA - depthB;
+        return pathA.localeCompare(pathB);
+      })
+      .slice(0, maxEntries);
+  }
+
   const entries: RepositoryTreeEntry[] = [];
 
-  for (const item of rawList) {
+  for (const item of candidateList) {
     if (!item.path) continue;
 
     const normalized = normalizeTreeEntry(item);
     entries.push(normalized);
 
-    if (normalized.type === 'blob') {
-      totalFiles++;
-      if (typeof normalized.size === 'number') {
-        totalBytes += normalized.size;
+    // If not capped, accumulate totals here
+    if (rawList.length <= maxEntries) {
+      if (normalized.type === 'blob') {
+        totalFiles++;
+        if (typeof normalized.size === 'number') {
+          totalBytes += normalized.size;
+        }
+      } else if (normalized.type === 'tree') {
+        totalDirectories++;
       }
-    } else if (normalized.type === 'tree') {
-      totalDirectories++;
     }
   }
 
@@ -145,7 +194,7 @@ export function normalizeRepositoryTree(raw: RawGitHubTree): RepositoryTree {
 
   return {
     sha: raw.sha,
-    truncated: Boolean(raw.truncated),
+    truncated: isCapped,
     entries,
     totalFiles,
     totalDirectories,
@@ -242,14 +291,16 @@ export class RepositoryService {
     owner: string,
     repo: string,
     tree: RepositoryTree,
-    maxSourceFilesToFetch = 30
+    maxSourceFilesToFetch = 10
   ): Promise<DependencyGraph> {
     const allRepoPaths = new Set(tree.entries.map((e) => e.path));
     const manifests: PackageDependency[] = [];
     const parsedFiles = new Map<string, ImportStatement[]>();
 
-    // 1. Discover and parse manifests
-    const manifestEntries = tree.entries.filter((e) => e.type === 'blob' && isManifestFile(e.path));
+    // 1. Discover and parse manifests (bounded to 8 manifests for edge runtime subrequest budget)
+    const manifestEntries = tree.entries
+      .filter((e) => e.type === 'blob' && isManifestFile(e.path))
+      .slice(0, 8);
 
     for (const manifestEntry of manifestEntries) {
       const content = await this.client.fetchBlobContent(owner, repo, manifestEntry.sha);
@@ -306,7 +357,7 @@ export class RepositoryService {
     repo: string,
     metadata: RepositoryMetadata,
     tree: RepositoryTree,
-    maxSourceFilesForLoc = 20
+    maxSourceFilesForLoc = 8
   ): Promise<RepositoryMetricsReport> {
     // 1. Fetch activity metrics concurrently (commit and contributor counts)
     let commitCount: number | null = null;
@@ -512,7 +563,7 @@ export class RepositoryService {
           e.path.startsWith('.github/workflows/'))
     );
 
-    const entriesToFetch = [...manifestEntries, ...configEntries].slice(0, 15);
+    const entriesToFetch = [...manifestEntries, ...configEntries].slice(0, 8);
     const fetchedPaths = new Set<string>();
 
     await Promise.all(

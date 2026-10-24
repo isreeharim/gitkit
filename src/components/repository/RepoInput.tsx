@@ -98,7 +98,7 @@ export function RepoInput() {
           <div className="flex items-center justify-between px-1 font-mono text-[11px] text-neutral-500">
             <span className="flex items-center gap-1.5">
               <Search className="h-3 w-3" />
-              <span>Examples: torvalds/linux, withastro/astro, astral-sh/uv</span>
+              <span>Examples: withastro/astro, astral-sh/uv, facebook/react</span>
             </span>
             <span className="text-neutral-500">Public repos</span>
           </div>
