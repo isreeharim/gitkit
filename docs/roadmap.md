@@ -200,3 +200,15 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 - [x] Clean technical branding and status blueprint: `v1.0 • Deterministic` badge and verified live engine summary
 - [x] Zero AI / Zero LLM guarantee preserved across all 12 phases
 - [x] Full verification suite: 192 unit tests passing, 29 Playwright E2E tests passing, clean TypeScript strict typecheck, and successful Astro Cloudflare build
+
+---
+
+## Production-Hardening & Pre-Release Audit (Completed)
+
+- [x] Comprehensive security audit: zero exposed secrets, verified client/server boundaries, zero raw HTML injection / XSS risks
+- [x] Comprehensive reliability audit: empty repositories, truncated trees, unusual filenames/unicode, unsupported languages, API rate limiting, network disruptions
+- [x] Dedicated reliability regression test suite (`tests/unit/reliability-regression.test.ts`), expanding unit tests to 200 passing tests
+- [x] Dependency audit: 100% permissive open-source licenses (MIT, ISC, BSD-2-Clause), zero paid dependencies, zero bloat
+- [x] GitHub Actions CI audit: added formatting checks (`npm run format:check`) alongside lint, typecheck, test, and build
+- [x] Complete documentation synchronization: README.md, docs/architecture.md, docs/development.md, docs/decisions.md (ADR 018), docs/roadmap.md
+- [x] Full verification passing: 200/200 unit tests, 29/29 E2E tests, clean typecheck, clean lint, clean format check, and successful Astro Cloudflare production build

@@ -29,14 +29,17 @@ jobs:
       - name: 1. Install dependencies
         run: npm ci
 
-      - name: 2. Run ESLint
+      - name: 2. Verify code formatting
+        run: npm run format:check
+
+      - name: 3. Run ESLint
         run: npm run lint
 
-      - name: 3. Verify TypeScript types
+      - name: 4. Verify TypeScript types
         run: npm run typecheck
 
-      - name: 4. Run unit tests
+      - name: 5. Run unit tests
         run: npm run test
 
-      - name: 5. Production build
+      - name: 6. Production build
         run: npm run build

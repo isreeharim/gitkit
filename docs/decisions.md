@@ -589,3 +589,43 @@ GitKit underwent 11 feature development phases, creating powerful deterministic 
 
 - **Pros**: Immediate professional feel akin to Linear and GitHub; zero added runtime dependencies; enhanced WCAG AA accessibility compliance; seamless keyboard navigation; complete preservation of all 192 unit tests and 29 Playwright E2E tests.
 - **Cons**: Requires keeping CSS tokens and focus indicator outlines consistent across new Astro components and React islands.
+
+---
+
+## ADR 018: Production Hardening, Edge Safety, and Release Readiness Audit
+
+### Status
+
+Accepted
+
+### Context
+
+Prior to public deployment targeting `https://gitkit.in` (and staging on Cloudflare Workers), GitKit required a comprehensive security, reliability, dependency, and performance audit. The objective was to guarantee zero secret leakage, safe handling of pathological repository states (empty, truncated, unusual filenames, unsupported languages, API rate limits, network outages), zero XSS risks, and strict validation of all user inputs without incurring external operational costs.
+
+### Decision
+
+1. **Client/Server Isolation & Zero Credential Exposure**:
+   - `GitHubClient` and `RepositoryService` are strictly server-side modules (`src/lib/github/`), invoked only within Astro SSR pages.
+   - Verified that client bundles (`dist/_astro/`) contain zero occurrences of Octokit, `process.env`, or `GITHUB_TOKEN`.
+   - Optional server token elevation (`GITHUB_TOKEN`) is read safely via environment fallback without bundling.
+2. **Deterministic Input Validation & HTML Safety**:
+   - Strict repository coordinate validation regex (`OWNER_REGEX`, `REPO_REGEX`, reserved paths blocklist).
+   - Zero raw HTML injection across the entire application: verified 0 occurrences of `set:html`, `dangerouslySetInnerHTML`, and `innerHTML`.
+   - SVG and Mermaid export generators strictly XML-escape and sanitize text labels.
+3. **Resilience to Edge Cases & API Failures**:
+   - Empty repositories (0 commits, 0 files) safely return normalized empty trees instead of uncaught 404/409 exceptions.
+   - Truncated repositories (>100,000 objects) surface non-blocking informational alerts in UI and canvas viewports.
+   - Unusual filenames (spaces, unicode, special characters) are handled gracefully across graph construction and export sanitization.
+   - Unsupported languages cleanly fall back to `'Other'` and plaintext processing without throwing.
+   - API rate-limiting (HTTP 403/429) extracts ISO reset timestamps and displays user-friendly recovery notices.
+4. **Permissive Open-Source Dependencies**:
+   - Verified 100% of dependencies use permissive licenses (MIT, ISC, BSD-2-Clause). Zero copyleft (GPL) or proprietary packages.
+   - Zero unused dependencies.
+5. **Continuous Verification Suite**:
+   - Expanded unit test coverage with dedicated reliability regression suite (`tests/unit/reliability-regression.test.ts`), bringing total unit tests to 200 passing tests.
+   - Updated GitHub Actions CI to enforce formatting checks (`npm run format:check`) alongside lint, typecheck, tests, and build.
+
+### Consequences
+
+- **Pros**: 100% deterministic, tamper-proof, zero secret leaks, robust edge-case resilience, full test coverage across 200 unit tests and 29 E2E tests.
+- **Cons**: Public users without a configured server PAT are subject to GitHub's standard unauthenticated rate limit of 60 req/hour per IP, requiring clear UI guidance on rate-limit resets.

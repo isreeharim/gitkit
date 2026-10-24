@@ -39,28 +39,40 @@ GitKit is an edge-native, zero-AI repository inspection and visualization engine
 ```text
 src/
 ├── components/          # Reusable UI components
-│   ├── charts/          # D3 / metric charts (future phases)
-│   ├── dashboard/       # Repo dashboard widgets (future phases)
-│   ├── graph/           # React Flow / dependency visualizers (future phases)
-│   ├── layout/          # Header, Footer, Navigation, AppShell
-│   ├── repository/      # Repository URL input & viewer components
-│   └── ui/              # Atom-level primitives (Button, Card, Badge, Input)
-├── layouts/             # Astro base layouts (RootLayout.astro)
-├── lib/                 # Core domain logic (strictly decoupled from UI)
-│   ├── analyzer/        # Deterministic static analysis rules & engine
-│   ├── git/             # Low-level git repository & tree traversals
-│   ├── github/          # GitHub REST/GraphQL connectors & URL parsers
-│   ├── graph/           # Graph algorithms (topological sort, cycle detection)
-│   ├── metrics/         # Cyclomatic complexity, SLOC, language breakdowns
-│   ├── parser/          # AST parsing (Tree-sitter WASM / regex fallbacks)
-│   ├── security/        # Security scanners (secret patterns, licenses)
-│   └── utils.ts         # Shared UI & string utilities
+│   ├── dashboard/       # Executive overview summaries (Health, Security, Git, Launcher)
+│   ├── dependencies/    # Dependency graph canvas, custom nodes, inspector panel
+│   ├── export/          # Multi-format export dialog (SVG, PNG, Mermaid, JSON)
+│   ├── git/             # Commit timeline, activity chart, hotspots table
+│   ├── graph/           # Repository map canvas, hierarchical nodes, inspector panel
+│   ├── health/          # Health score card, category breakdown cards, methodology
+│   ├── layout/          # Header, Footer, RepoWorkspaceHeader, Navigation tabs
+│   ├── pulls/           # PR lists, status badges, blast radius impact view
+│   ├── repository/      # Repository URL input, metadata cards, file tree explorer
+│   └── ui/              # Base primitives (Card, Badge, Button)
+├── layouts/             # Layout wrappers (RootLayout.astro, RepoWorkspaceLayout.astro)
+├── lib/                 # Pure deterministic engines (zero UI dependencies)
+│   ├── analyzer/        # Dependency resolution, cycle detection, health rule scoring
+│   ├── export/          # SVG, PNG, Mermaid, JSON schema generator, download utilities
+│   ├── git/             # Git provider abstraction, hotspot scoring, timeline builder
+│   ├── github/          # Octokit connector, client/service, URL parser, error handling
+│   ├── graph/           # Tree-to-graph transformation, hierarchical layout, collapse
+│   ├── metrics/         # LOC counter, language detector, structure & complexity analyzer
+│   ├── parser/          # JS/TS & Python AST parsers, manifest parsers
+│   ├── pulls/           # Pull request normalizer, BFS blast radius impact analyzer
+│   ├── security/        # Gitleaks regex rules, OSV batch client, secret masking
+│   └── utils.ts         # Formatting and utility functions
 ├── pages/               # Astro routes
-│   ├── index.astro      # Homepage
-│   └── [...future]      # Dynamic repository workspace: [owner]/[repo].astro
-├── styles/              # Global styles & Tailwind CSS entry points
-├── types/               # TypeScript interface definitions
-└── workers/             # Dedicated Web Workers / Cloudflare Worker utilities
+│   ├── index.astro      # Homepage with repository input and engine status
+│   └── [owner]/[repo]/  # Unified repository intelligence workspace
+│       ├── index.astro  # Overview intelligence dashboard
+│       ├── map.astro    # Interactive repository map
+│       ├── dependencies.astro # Deterministic dependency graph
+│       ├── git.astro    # Git evolution and hotspots
+│       ├── pulls/       # Pull request analyzer (list and PR detail)
+│       ├── health.astro # Deterministic repository health assessment
+│       └── security.astro # Security audit and vulnerability findings
+├── styles/              # Global styles, Tailwind CSS v4, dark scrollbars, focus outline
+└── types/               # Dedicated TypeScript interface models
 ```
 
 ---

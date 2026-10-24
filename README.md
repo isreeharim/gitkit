@@ -23,19 +23,26 @@ GitKit is a free, open-source-friendly, deterministic developer toolkit for unde
 
 ---
 
-## Core Flow (Target State)
+## Core Flow & Workspaces
 
-Given a public repository URL:
+Given any public GitHub repository:
 
 ```text
 https://github.com/{owner}/{repo}
 ```
 
-GitKit provides an interactive developer workspace at:
+GitKit provides an interactive, deterministic intelligence workspace:
 
-```text
-https://gitkit.in/{owner}/{repo} (or staging URL)
-```
+| Workspace Route                | Analytical Capability   | Core Engine                                                                |
+| :----------------------------- | :---------------------- | :------------------------------------------------------------------------- |
+| `/{owner}/{repo}`              | **Overview**            | Deterministic metrics, health score preview, security posture, file tree   |
+| `/{owner}/{repo}/map`          | **Interactive Map**     | Hierarchical file tree topology, node collapse, React Flow canvas          |
+| `/{owner}/{repo}/dependencies` | **Dependency Graph**    | Concrete AST imports, manifest parsing, cycle detection, PageRank          |
+| `/{owner}/{repo}/git`          | **Git History**         | Commit timeline, weekly activity velocity, deterministic hotspots formula  |
+| `/{owner}/{repo}/pulls`        | **Pull Requests**       | PR list, status filtering, blast radius analysis, changed files            |
+| `/{owner}/{repo}/health`       | **Repository Health**   | Transparent 7-category rule assessment, evidence-based score (0–100)       |
+| `/{owner}/{repo}/security`     | **Security Audit**      | Deterministic secret detection, Gitleaks rules, OSV vulnerability advisory |
+| `Global Export`                | **Multi-Format Export** | Standalone SVG, 2x Retina PNG, Mermaid flowchart, JSON Schema v1.0         |
 
 _(Note: The domain `gitkit.in` is reserved for future launch. Development and staging use Cloudflare preview/workers.dev targets)._
 
