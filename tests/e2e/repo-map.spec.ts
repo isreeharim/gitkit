@@ -65,7 +65,7 @@ test.describe('GitKit Interactive Repository Map (/{owner}/{repo}/map)', () => {
     const response = await page.goto('/octocat/Hello-World');
 
     if (response?.status() === 200) {
-      const mapBtn = page.getByRole('link', { name: /Interactive Repo Map/i }).first();
+      const mapBtn = page.getByRole('link', { name: /Repo Map/i }).first();
       await expect(mapBtn).toBeVisible();
       await mapBtn.click();
 

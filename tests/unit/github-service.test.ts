@@ -187,6 +187,8 @@ describe('RepositoryService', () => {
         truncated: false,
         tree: [{ path: 'README.md', mode: '100644', type: 'blob', size: 100, sha: 'abc' }],
       }),
+      fetchBlobContent: vi.fn(),
+      fetchFileContent: vi.fn(),
     };
 
     const service = new RepositoryService(mockClient);
@@ -210,6 +212,8 @@ describe('RepositoryService', () => {
         owner: { login: 'corp' },
       }),
       fetchTree: vi.fn(),
+      fetchBlobContent: vi.fn(),
+      fetchFileContent: vi.fn(),
     };
 
     const service = new RepositoryService(mockClient);
@@ -235,6 +239,8 @@ describe('RepositoryService', () => {
       fetchTree: vi
         .fn()
         .mockRejectedValue(new GitHubApiError('Git Tree not found', 'not_found', 404)),
+      fetchBlobContent: vi.fn(),
+      fetchFileContent: vi.fn(),
     };
 
     const service = new RepositoryService(mockClient);
@@ -251,6 +257,8 @@ describe('RepositoryService', () => {
     const mockClient: IGitHubClient = {
       fetchRepository: vi.fn().mockRejectedValue(new GitHubApiError('Not Found', 'not_found', 404)),
       fetchTree: vi.fn(),
+      fetchBlobContent: vi.fn(),
+      fetchFileContent: vi.fn(),
     };
 
     const service = new RepositoryService(mockClient);

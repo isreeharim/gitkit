@@ -14,6 +14,14 @@ import type {
   RepositoryIngestionResult,
   RepositoryLicense,
 } from '@/types/repository';
+import type { DependencyGraph, ImportStatement, PackageDependency } from '@/types/dependency';
+import {
+  isSupportedSourceFile,
+  isManifestFile,
+  parseManifest,
+  parseSourceImports,
+} from '@/lib/parser';
+import { buildDependencyGraph } from '@/lib/analyzer';
 
 /**
  * Deterministically normalizes a raw GitHub repository API payload
@@ -210,6 +218,69 @@ export class RepositoryService {
         },
       };
     }
+  }
+
+  /**
+   * Performs deterministic dependency analysis across manifests and prioritized source files.
+   */
+  async analyzeDependencies(
+    owner: string,
+    repo: string,
+    tree: RepositoryTree,
+    maxSourceFilesToFetch = 30
+  ): Promise<DependencyGraph> {
+    const allRepoPaths = new Set(tree.entries.map((e) => e.path));
+    const manifests: PackageDependency[] = [];
+    const parsedFiles = new Map<string, ImportStatement[]>();
+
+    // 1. Discover and parse manifests
+    const manifestEntries = tree.entries.filter((e) => e.type === 'blob' && isManifestFile(e.path));
+
+    for (const manifestEntry of manifestEntries) {
+      const content = await this.client.fetchBlobContent(owner, repo, manifestEntry.sha);
+      if (content) {
+        const parsed = parseManifest(manifestEntry.path, content);
+        manifests.push(...parsed);
+      }
+    }
+
+    // 2. Discover supported source files
+    const sourceEntries = tree.entries.filter(
+      (e) => e.type === 'blob' && isSupportedSourceFile(e.path)
+    );
+
+    // Prioritize root and primary source files (e.g. entry points and shallow paths)
+    sourceEntries.sort((a, b) => {
+      const isEntryA = /^(src\/)?(index|main|app|server)\.[a-z]+$/i.test(a.path);
+      const isEntryB = /^(src\/)?(index|main|app|server)\.[a-z]+$/i.test(b.path);
+      if (isEntryA && !isEntryB) return -1;
+      if (!isEntryA && isEntryB) return 1;
+      return a.path.length - b.path.length;
+    });
+
+    const entriesToFetch = sourceEntries.slice(0, maxSourceFilesToFetch);
+
+    // Fetch and parse prioritized source files
+    await Promise.all(
+      entriesToFetch.map(async (entry) => {
+        try {
+          const content = await this.client.fetchBlobContent(owner, repo, entry.sha);
+          if (content) {
+            const imports = parseSourceImports(entry.path, content);
+            parsedFiles.set(entry.path, imports);
+          }
+        } catch {
+          // Graceful fallback: continue analyzing remaining files
+        }
+      })
+    );
+
+    // 3. Construct deterministic DependencyGraph
+    return buildDependencyGraph({
+      parsedFiles,
+      allRepoPaths,
+      manifests,
+    });
   }
 }
 

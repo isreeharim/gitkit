@@ -186,3 +186,39 @@ GitKit requires an interactive visual representation of ingested repository file
 
 - **Pros**: 100% deterministic, zero layout jitter, instant search and filtering, highly performant on large repos, completely decoupled graph engine tested via pure unit tests.
 - **Cons**: Deep directory hierarchies require horizontal panning; addressed with viewport fit controls and minimap/navigation zoom limits.
+
+---
+
+## ADR 009: Deterministic Dependency Graph Architecture, Multi-Language Import Parsers, Manifest Ingestion, and Elementary Cycle Detection
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit requires understanding relationships between source files and external packages for ingested repositories at `/{owner}/{repo}/dependencies`. Under GitKit's non-negotiable architectural constraints:
+
+1. Zero AI/LLM inference: all dependencies must be derived deterministically via AST / regex parsing and manifest analysis.
+2. Cloudflare Serverless / Edge runtime compatibility: native Node.js binaries or blocking operations are prohibited.
+3. Multi-language support: JavaScript, TypeScript, JSX, TSX, and Python must be handled reliably, alongside multi-ecosystem package manifests (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `go.mod`).
+4. Graph cycles: circular dependencies must be detected deterministically without false positives, normalized by canonical rotation, and visually highlighted.
+
+### Decision
+
+1. **Decoupled Architecture (`src/lib/parser/` and `src/lib/analyzer/`)**:
+   - `src/lib/parser/`: Language-specific parsers (`JavaScriptTypeScriptParser`, `PythonParser`, `manifest-parser`) conforming to `ISourceParser`.
+   - `src/lib/analyzer/`: Deterministic module resolution (`resolver.ts`), cycle detection (`cycle-detector.ts`), graph builder (`graph-builder.ts`), filtering (`graph-filter.ts`), 2D collision-free layout (`graph-layout.ts`), and React Flow rendering adapter (`react-flow-adapter.ts`).
+2. **Deterministic Module Resolution (`resolver.ts`)**:
+   - Resolves relative imports (`./`, `../`), extensionless paths (`.ts`, `.tsx`, `.js`, etc.), directory index files (`index.ts`), path aliases (`@/`, `~/`), Python relative package imports (`.`, `..`), and classifies bare module names as external package dependencies.
+3. **Canonical Cycle Detection (`cycle-detector.ts`)**:
+   - Implements DFS back-edge detection with canonical rotation normalization (smallest lexicographical node starting the cycle representation `[A, B, C, A]`) to avoid duplicate permutations of identical cycles.
+4. **Prioritized Batch Blob Ingestion**:
+   - Manifests are always fetched and parsed. Source files are prioritized based on entrypoint patterns (`index`, `main`, `app`, `server`) and shallow path depth up to an edge-friendly quota to stay well within GitHub API limits.
+5. **Interactive React Flow Dependency Workspace (`/{owner}/{repo}/dependencies`)**:
+   - Renders custom node components (`depFileNode`, `depPackageNode`), incoming/outgoing degree badges, cycle chain warnings in rose-500, search filtering, and an interactive detail panel inspector.
+
+### Consequences
+
+- **Pros**: 100% reproducible and verifiable; zero AI hallucination; fast execution; pure testability with 99 unit tests; clean UI with responsive dark theme.
+- **Cons**: Large repositories fetch a prioritized subset of source files to respect GitHub API rate limits; users can inspect full manifests and prioritized modules.

@@ -69,6 +69,14 @@ const pageTitle = ingestionResult?.success
           </div>
 
           <a
+            href={`/${owner}/${repo}/dependencies`}
+            class="hidden items-center gap-1 rounded-md border border-neutral-800 bg-neutral-900/60 px-2.5 py-1 font-mono text-xs text-neutral-400 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white md:flex"
+          >
+            <GitBranch className="h-3 w-3 text-cyan-400" />
+            <span>Dependencies</span>
+          </a>
+
+          <a
             href={ingestionResult.metadata.htmlUrl}
             target="_blank"
             rel="noopener noreferrer"

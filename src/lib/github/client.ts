@@ -88,6 +88,8 @@ export interface RawGitHubTree {
 export interface IGitHubClient {
   fetchRepository(owner: string, repo: string): Promise<RawGitHubRepository>;
   fetchTree(owner: string, repo: string, treeSha: string): Promise<RawGitHubTree>;
+  fetchBlobContent(owner: string, repo: string, fileSha: string): Promise<string | null>;
+  fetchFileContent(owner: string, repo: string, path: string, ref?: string): Promise<string | null>;
 }
 
 export interface GitHubClientOptions {
@@ -163,6 +165,52 @@ export class GitHubClient implements IGitHubClient {
       return response.data as RawGitHubTree;
     } catch (err: unknown) {
       throw this.transformError(err, `${owner}/${repo} (tree: ${treeSha})`);
+    }
+  }
+
+  /**
+   * Fetches raw blob content from GitHub by Git tree SHA.
+   */
+  async fetchBlobContent(owner: string, repo: string, fileSha: string): Promise<string | null> {
+    try {
+      const response = await this.octokit.rest.git.getBlob({
+        owner,
+        repo,
+        file_sha: fileSha,
+      });
+
+      if (response.data.content) {
+        return decodeBase64Utf8(response.data.content);
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Fetches raw content of a file from GitHub by repository path.
+   */
+  async fetchFileContent(
+    owner: string,
+    repo: string,
+    path: string,
+    ref?: string
+  ): Promise<string | null> {
+    try {
+      const response = await this.octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref,
+      });
+
+      if ('content' in response.data && typeof response.data.content === 'string') {
+        return decodeBase64Utf8(response.data.content);
+      }
+      return null;
+    } catch {
+      return null;
     }
   }
 
@@ -248,5 +296,25 @@ export class GitHubClient implements IGitHubClient {
       'unknown',
       status
     );
+  }
+}
+
+/**
+ * Safely decodes base64 string to UTF-8 across Node and Cloudflare Workers.
+ */
+function decodeBase64Utf8(base64Str: string): string {
+  try {
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(base64Str, 'base64').toString('utf-8');
+    }
+    const clean = base64Str.replace(/\s/g, '');
+    const binary = atob(clean);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return '';
   }
 }

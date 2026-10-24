@@ -55,13 +55,15 @@ This roadmap outlines the planned development phases for GitKit. Features marked
 
 ---
 
-## Phase 4: Static Analysis & Code Metrics Engine (Upcoming)
+## Phase 4: Dependency Graph & Analysis Engine (Completed)
 
-- [ ] Tree-sitter AST parsing integration (via WebAssembly)
-- [ ] Cyclomatic complexity and Halstead metrics calculation
-- [ ] Dependency manifest parsers (`package.json`, `Cargo.toml`, `go.mod`, `requirements.txt`)
-- [ ] License detection and compliance scanner
-- [ ] Code health & maintainability index calculator (deterministic formulas only)
+- [x] Multi-language deterministic source parsers (JavaScript, TypeScript, JSX, TSX, Python)
+- [x] Multi-ecosystem manifest parsers (`package.json`, `requirements.txt`, `pyproject.toml`, `Cargo.toml`, `go.mod`)
+- [x] Deterministic module resolution engine (relative paths, extension matching, directory index, path aliases `@/` and `~/`, Python relative imports)
+- [x] Canonical DFS back-edge cycle detection algorithm (`A -> B -> C -> A`) with canonical rotation normalization
+- [x] Decoupled graph construction, degrees calculation, and collision-free 2D layered layout
+- [x] Custom dark-theme React Flow workspace at `/{owner}/{repo}/dependencies` with cycle highlights and inspector panel
+- [x] Full unit test coverage (31 tests in dependency suite, 99 total unit tests) and Playwright E2E tests
 
 ---
 
