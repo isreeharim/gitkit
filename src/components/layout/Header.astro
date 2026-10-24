@@ -1,0 +1,44 @@
+---
+import Badge from '../ui/Badge.astro';
+---
+
+<header
+  class="sticky top-0 z-50 w-full border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md"
+>
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <div class="flex items-center gap-3">
+      <a href="/" class="group flex items-center gap-2">
+        <span
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-500/10 font-mono text-xs font-semibold text-emerald-400 transition-colors group-hover:border-emerald-500/50"
+        >
+          gk
+        </span>
+        <span
+          class="text-sm font-semibold tracking-tight text-white transition-colors group-hover:text-emerald-400"
+        >
+          GitKit
+        </span>
+      </a>
+      <span class="text-neutral-600">/</span>
+      <Badge variant="outline" class="px-2 py-0 text-[11px] text-neutral-400">
+        Phase 0 (Foundation)
+      </Badge>
+    </div>
+
+    <nav class="flex items-center gap-4 font-mono text-xs">
+      <a
+        href="https://github.com"
+        target="_blank"
+        rel="noreferrer"
+        class="text-neutral-400 transition-colors hover:text-white"
+      >
+        docs
+      </a>
+      <div class="h-3 w-px bg-neutral-800"></div>
+      <div class="flex items-center gap-1.5 text-neutral-400">
+        <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+        <span class="text-[11px]">Deterministic Engine</span>
+      </div>
+    </nav>
+  </div>
+</header>

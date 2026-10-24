@@ -1,0 +1,25 @@
+# Build & dependencies
+node_modules/
+dist/
+.astro/
+
+# Environment variables
+.env
+.env.production
+.env.local
+*.env
+
+# Testing & coverage
+coverage/
+playwright-report/
+test-results/
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,108 @@
+# GitKit Architecture Decision Records (ADRs)
+
+This document tracks the foundational architectural decisions made for GitKit, their context, and consequences.
+
+---
+
+## ADR 001: Strict Zero AI / Zero LLM Policy
+
+### Status
+
+Accepted
+
+### Context
+
+Many developer tools have integrated LLMs to provide summaries or subjective ratings. These introduce high API latency, unpredictable hallucinations, nondeterministic outputs, privacy risks, and recurring API costs that violate our ₹0 budget.
+
+### Decision
+
+GitKit will strictly forbid any AI models, LLM APIs, or agent frameworks. All analysis must be 100% deterministic, computed via AST parsers (Tree-sitter), static regex/pattern matchers, deterministic graph algorithms, and formal code metrics.
+
+### Consequences
+
+- **Pros**: Predictable, mathematically reproducible, verifiable, zero API subscription costs, microsecond latency.
+- **Cons**: Requires building and maintaining explicit AST and grammar parsers for language features.
+
+---
+
+## ADR 002: Framework Selection — Astro with React Islands
+
+### Status
+
+Accepted
+
+### Context
+
+GitKit needs fast initial page loads, optimal SEO, and clean serverless deployment, alongside rich interactive visualizers (dependency graphs, interactive AST trees, metric charts).
+
+### Decision
+
+Adopt **Astro 5** as the core meta-framework with **React 19** for interactive islands.
+
+### Consequences
+
+- **Pros**: Ships zero JavaScript by default for content and structural layouts. Supports selective hydration (`client:load`, `client:visible`) for graph and canvas visualizers.
+- **Cons**: Requires discipline separating Astro component boundaries (`.astro`) from React interactive islands (`.tsx`).
+
+---
+
+## ADR 003: Deployment Target — Cloudflare Workers / Pages
+
+### Status
+
+Accepted
+
+### Context
+
+The operational budget is ₹0. We must avoid vendor lock-in to paid server platforms or single-vendor hosting tiers (e.g., Vercel) while maintaining global low latency.
+
+### Decision
+
+Use `@astrojs/cloudflare` targeting Cloudflare Workers.
+
+### Consequences
+
+- **Pros**: Generous free tier (100k requests/day), instant edge routing worldwide, zero server maintenance costs.
+- **Cons**: Edge runtime lacks Node.js filesystem access (`fs`); heavy Git clone operations must use in-memory virtual filesystems (`isomorphic-git`) or client-side Web Workers.
+
+---
+
+## ADR 004: UI Foundations & Anti-Slop Visual Aesthetics
+
+### Status
+
+Accepted
+
+### Context
+
+Developer tools often fall into one of two traps: either unstyled developer wireframes or generic AI SaaS marketing templates with excessive rainbow gradients, glassmorphism, and fake badges.
+
+### Decision
+
+Adopt a dark-first, technical, dense, and minimal aesthetic inspired by GitHub, Linear, and modern IDEs (subtle 1px borders, neutral dark palette, clear monospace accents). Utilize Tailwind CSS v4 and Lucide icons.
+
+### Consequences
+
+- **Pros**: Professional, focused developer experience with maximum data density and minimal visual distraction.
+- **Cons**: Requires custom token discipline rather than copying off-the-shelf marketing kits.
+
+---
+
+## ADR 005: Deferral of Custom Domain (`gitkit.in`)
+
+### Status
+
+Accepted
+
+### Context
+
+The domain `gitkit.in` is reserved for future launch but has not yet been purchased.
+
+### Decision
+
+Development, staging, and preview workflows will not depend on `gitkit.in`. Preview and staging deployments will use Cloudflare `workers.dev` URLs until the domain is purchased and explicitly confirmed.
+
+### Consequences
+
+- **Pros**: Zero initial capital outlay; application architecture remains domain-agnostic.
+- **Cons**: Custom domain configuration is deferred to post-launch hardening.
